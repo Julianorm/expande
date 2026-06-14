@@ -10,7 +10,6 @@ const Badge=({color,children})=><span style={{background:color+'18',color,border
 const KpiCard=({label,value,sub,color=ACCENT})=><div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:14,padding:'18px 22px',flex:1,minWidth:140}}><div style={{fontSize:12,color:MUTED,fontWeight:600,marginBottom:4,textTransform:'uppercase'}}>{label}</div><div style={{fontSize:26,fontWeight:800,color}}>{value}</div>{sub&&<div style={{fontSize:12,color:MUTED,marginTop:2}}>{sub}</div>}</div>
 export default function App(){
 const{user}=useAuth()
-if(!user) return null
 const[clients,setClients]=useState([])
 const[sales,setSales]=useState([])
 const[routes,setRoutes]=useState([])
