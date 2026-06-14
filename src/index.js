@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import Login from './pages/Login'
 import { useAuth } from './lib/useAuth'
@@ -16,14 +15,22 @@ function Root() {
 
   if (!user) return <Login />
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/*" element={<App />} />
-      </Routes>
-    </BrowserRouter>
-  )
+  return <App />
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  componentDidCatch(error) { this.setState({ error: error.message }) }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: 40, fontFamily: 'sans-serif' }}>
+        <h2>Erro encontrado:</h2>
+        <pre style={{ background: '#fee', padding: 16, borderRadius: 8, fontSize: 12 }}>{this.state.error}</pre>
+      </div>
+    )
+    return this.props.children
+  }
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
-root.render(<React.StrictMode><Root /></React.StrictMode>)
+root.render(<React.StrictMode><ErrorBoundary><Root /></ErrorBoundary></React.StrictMode>)
