@@ -9,8 +9,8 @@ const timeNow=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'
 const Badge=({color,children})=><span style={{background:color+'18',color,border:`1px solid ${color}33`,borderRadius:6,padding:'2px 10px',fontSize:12,fontWeight:600}}>{children}</span>
 const KpiCard=({label,value,sub,color=ACCENT})=><div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:14,padding:'18px 22px',flex:1,minWidth:140}}><div style={{fontSize:12,color:MUTED,fontWeight:600,marginBottom:4,textTransform:'uppercase'}}>{label}</div><div style={{fontSize:26,fontWeight:800,color}}>{value}</div>{sub&&<div style={{fontSize:12,color:MUTED,marginTop:2}}>{sub}</div>}</div>
 export default function App(){
-const auth=useAuth()
-const user=auth?.user
+const{user}=useAuth()
+if(!user) return null
 const[clients,setClients]=useState([])
 const[sales,setSales]=useState([])
 const[routes,setRoutes]=useState([])
