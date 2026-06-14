@@ -14,11 +14,12 @@ function Root() {
     </div>
   )
 
+  if (!user) return <Login />
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-        <Route path="/*" element={user ? <App /> : <Navigate to="/login" />} />
+        <Route path="/*" element={<App />} />
       </Routes>
     </BrowserRouter>
   )
