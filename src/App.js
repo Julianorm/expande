@@ -57,7 +57,11 @@ const buscarProdutos=async(search)=>{
   try{
     const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`)
     const data=await res.json()
-    setPedidoResultados(Array.isArray(data)?data:[])
+    const filtrado=(Array.isArray(data)?data:[]).filter(p=>
+      p.descricao?.toLowerCase().includes(search.toLowerCase())||
+      p.codigoProprio?.toLowerCase().includes(search.toLowerCase())
+    )
+    setPedidoResultados(filtrado)
   }catch(err){
     showToast('Erro ao buscar produtos','error')
   }
