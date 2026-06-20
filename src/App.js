@@ -6,6 +6,7 @@ const ACCENT='#2563EB',ACCENT_LIGHT='#EFF6FF',SUCCESS='#16A34A',WARNING='#D97706
 const fmt=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
 const today=()=>new Date().toISOString().split('T')[0]
 const timeNow=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
 const Badge=({color,children})=><span style={{background:color+'18',color,border:`1px solid ${color}33`,borderRadius:6,padding:'2px 10px',fontSize:12,fontWeight:600}}>{children}</span>
 const KpiCard=({label,value,sub,color=ACCENT})=><div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:14,padding:'18px 22px',flex:1,minWidth:140}}><div style={{fontSize:12,color:MUTED,fontWeight:600,marginBottom:4,textTransform:'uppercase'}}>{label}</div><div style={{fontSize:26,fontWeight:800,color}}>{value}</div>{sub&&<div style={{fontSize:12,color:MUTED,marginTop:2}}>{sub}</div>}</div>
 export default function App(){
@@ -38,7 +39,6 @@ const[pedidoResultados,setPedidoResultados]=useState([])
 const[pedidoFormaPgto,setPedidoFormaPgto]=useState('')
 const[pedidoSituacao,setPedidoSituacao]=useState('Pedido S/ NFe')
 const[pedidoLoading,setPedidoLoading]=useState(false)
-const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const loadClients=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('clients').select('*').eq('user_id',user.id).order('name');if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data);setRoutes([...new Set(data.map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
@@ -52,44 +52,32 @@ const handleSetGoal=async()=>{if(!user?.id)return;const v=parseFloat(goalInput);
 const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(parseFloat(saleValue))){showToast('Selecione um cliente e informe o valor.','error');return}const client=clients.find(c=>c.id===selectedClient);const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:client.id,client_name:client.name,route:client.route,value:parseFloat(saleValue),note:saleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setSelectedClient('');setSaleValue('');setSaleNote('');showToast(`Venda de ${fmt(parseFloat(saleValue))} registrada!`)}
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
-  const getSession=async()=>{const{data}=await supabase.auth.getSession();return data.session?.access_token||''}
-
 const buscarProdutos=async(search)=>{
   if(search.length<2){setPedidoResultados([]);return}
   try{
-    const token=await getSession()
-    console.log('Token:',token?'ok':'vazio')
-    const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`,{headers:{'Authorization':`Bearer ${token}`}})
-    console.log('Status:',res.status)
+    const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`)
     const data=await res.json()
-    console.log('Dados:',JSON.stringify(data))
     setPedidoResultados(Array.isArray(data)?data:[])
   }catch(err){
-    console.error('Erro:',err.message)
     showToast('Erro ao buscar produtos','error')
   }
 }
-
 const addProdutoPedido=(produto)=>{
   setPedidoProdutos(prev=>{
     const existe=prev.find(p=>p.codigo===produto.codigo)
     if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+1}:p)
-    return [...prev,{...produto,quant:1,vDesc:0}]
+    return[...prev,{...produto,quant:1,vDesc:0}]
   })
   setPedidoSearch('')
   setPedidoResultados([])
 }
-
 const totalPedido=pedidoProdutos.reduce((acc,p)=>{
   const sub=p.precoVenda*p.quant
   const desc=sub*(p.vDesc||0)/100
   return acc+sub-desc
 },0)
-
 const confirmarPedido=async()=>{
-  if(!pedidoCliente||pedidoProdutos.length===0||!pedidoFormaPgto){
-    showToast('Preencha cliente, produtos e forma de pagamento.','error');return
-  }
+  if(!pedidoCliente||pedidoProdutos.length===0||!pedidoFormaPgto){showToast('Preencha cliente, produtos e forma de pagamento.','error');return}
   setPedidoLoading(true)
   try{
     const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{
@@ -110,42 +98,13 @@ const confirmarPedido=async()=>{
       showToast(`Pedido #${result.codigo} criado no eGestor!`)
       setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('');setPedidoSituacao('Pedido S/ NFe')
       await loadSales()
-   }else{
-    showToast('Erro: '+JSON.stringify(result),'error')
-  }
+    }else{
+      showToast('Erro: '+JSON.stringify(result),'error')
+    }
   }catch(err){
     showToast('Erro ao criar pedido','error')
   }
   setPedidoLoading(false)
-}
-  }catch(err){
-    showToast('Erro ao criar pedido','error')
-  }
-  setPedidoLoading(false)
-}
-  setPedidoLoading(true)
-  const token=await getSession()
-  const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{
-    method:'POST',
-    headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
-    body:JSON.stringify({
-      codContato:pedidoCliente.erp_code,
-      nomeContato:pedidoCliente.name,
-      route:pedidoCliente.route,
-      produtos:pedidoProdutos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),
-      codFormaPgto:parseInt(pedidoFormaPgto),
-      situacaoOS:pedidoSituacao
-    })
-  })
-  const result=await res.json()
-  setPedidoLoading(false)
-  if(result.codigo){
-    showToast(`Pedido #${result.codigo} criado no eGestor!`)
-    setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('');setPedidoSituacao('Pedido S/ NFe')
-    await loadSales()
-  }else{
-    showToast('Erro ao criar pedido: '+JSON.stringify(result),'error')
-  }
 }
 const routeClients=useMemo(()=>selectedRoute?clients.filter(c=>c.route===selectedRoute):[],[clients,selectedRoute])
 const routeSales=useMemo(()=>sales.filter(s=>s.route===selectedRoute),[sales,selectedRoute])
@@ -333,10 +292,9 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 </table>
 </div>}
 </div>}
-  {activeTab==='pedido'&&<div>
+{activeTab==='pedido'&&<div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:14,padding:'18px 20px',marginBottom:16}}>
 <div style={{fontWeight:700,fontSize:15,marginBottom:14}}>🛒 Novo Pedido</div>
-
 <div style={{marginBottom:12}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>CLIENTE</label>
 {pedidoCliente?<div style={{display:'flex',alignItems:'center',gap:8,background:ACCENT_LIGHT,borderRadius:8,padding:'8px 12px'}}>
@@ -348,7 +306,6 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 {(selectedRoute?routeClients:clients).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
 </select>}
 </div>
-
 <div style={{marginBottom:12}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>SITUAÇÃO</label>
 <select value={pedidoSituacao} onChange={e=>setPedidoSituacao(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'9px 10px',fontSize:13,background:SURFACE}}>
@@ -358,7 +315,6 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <option>Troca</option>
 </select>
 </div>
-
 <div style={{marginBottom:12}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>FORMA DE PAGAMENTO</label>
 <select value={pedidoFormaPgto} onChange={e=>setPedidoFormaPgto(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'9px 10px',fontSize:13,background:SURFACE}}>
@@ -370,7 +326,6 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <option value="17">Débito em Conta</option>
 </select>
 </div>
-
 <div style={{marginBottom:16,position:'relative'}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>BUSCAR PRODUTO</label>
 <input type="text" placeholder="Digite o nome do produto…" value={pedidoSearch}
@@ -382,11 +337,10 @@ style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,
 onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT}
 onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <div style={{fontWeight:600}}>{p.descricao}</div>
-<div style={{fontSize:11,color:MUTED}}>Cód: {p.codigoProprio} • R$ {p.precoVenda?.toFixed(2)}</div>
+<div style={{fontSize:11,color:MUTED}}>Cód: {p.codigoProprio} • {fmt(p.precoVenda)}</div>
 </div>)}
 </div>}
 </div>
-
 {pedidoProdutos.length>0&&<div style={{marginBottom:16}}>
 <div style={{fontWeight:700,fontSize:13,marginBottom:8}}>Produtos do Pedido</div>
 <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
@@ -405,11 +359,8 @@ return<tr key={p.codigo} style={{borderBottom:`1px solid ${BORDER}`,background:i
 </tr>})}
 </tbody>
 </table>
-<div style={{textAlign:'right',marginTop:12,fontWeight:800,fontSize:18,color:ACCENT}}>
-Total: {fmt(totalPedido)}
-</div>
+<div style={{textAlign:'right',marginTop:12,fontWeight:800,fontSize:18,color:ACCENT}}>Total: {fmt(totalPedido)}</div>
 </div>}
-
 <button onClick={confirmarPedido} disabled={pedidoLoading} style={{width:'100%',background:pedidoLoading?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:15,cursor:pedidoLoading?'not-allowed':'pointer'}}>
 {pedidoLoading?'Criando pedido…':'✅ Confirmar Pedido'}
 </button>
