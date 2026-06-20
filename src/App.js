@@ -91,6 +91,34 @@ const confirmarPedido=async()=>{
     showToast('Preencha cliente, produtos e forma de pagamento.','error');return
   }
   setPedidoLoading(true)
+  try{
+    const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        codContato:pedidoCliente.erp_code,
+        nomeContato:pedidoCliente.name,
+        route:pedidoCliente.route,
+        user_id:user.id,
+        produtos:pedidoProdutos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),
+        codFormaPgto:parseInt(pedidoFormaPgto),
+        situacaoOS:pedidoSituacao
+      })
+    })
+    const result=await res.json()
+    if(result.codigo){
+      showToast(`Pedido #${result.codigo} criado no eGestor!`)
+      setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('');setPedidoSituacao('Pedido S/ NFe')
+      await loadSales()
+    }else{
+      showToast('Erro: '+JSON.stringify(result),'error')
+    }
+  }catch(err){
+    showToast('Erro ao criar pedido','error')
+  }
+  setPedidoLoading(false)
+}
+  setPedidoLoading(true)
   const token=await getSession()
   const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{
     method:'POST',
