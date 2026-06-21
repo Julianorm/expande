@@ -240,7 +240,6 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <td style={{padding:'10px 14px'}}><Badge color={SUCCESS}>{fmt(s.value)}</Badge></td>
 <td style={{padding:'10px 14px',color:MUTED}}>{s.note||'—'}</td>
 <td style={{padding:'10px 14px',display:'flex',gap:4}}>
-<button onClick={()=>abrirEdicao(s)} style={{background:'none',border:'none',color:ACCENT,cursor:'pointer',fontSize:14}}>✏️</button>
 <button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:14}}>✕</button>
 </td>
 </tr>)}</tbody>
@@ -311,7 +310,6 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <td style={{padding:'10px 14px'}}><Badge color={SUCCESS}>{fmt(s.value)}</Badge></td>
 <td style={{padding:'10px 14px',color:MUTED}}>{s.note||'—'}</td>
 <td style={{padding:'10px 14px',display:'flex',gap:4}}>
-<button onClick={()=>abrirEdicao(s)} style={{background:'none',border:'none',color:ACCENT,cursor:'pointer',fontSize:14}}>✏️</button>
 <button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:14}}>✕</button>
 </td>
 </tr>)}</tbody>
