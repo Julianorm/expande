@@ -13,6 +13,7 @@ export default function App(){
 const{user}=useAuth()
 const[clients,setClients]=useState([])
 const[sales,setSales]=useState([])
+const[orders,setOrders]=useState([])
 const[routes,setRoutes]=useState([])
 const[selectedRoute,setSelectedRoute]=useState('')
 const[dailyGoal,setDailyGoal]=useState('')
@@ -39,18 +40,19 @@ const[pedidoResultados,setPedidoResultados]=useState([])
 const[pedidoFormaPgto,setPedidoFormaPgto]=useState('')
 const[pedidoSituacao,setPedidoSituacao]=useState('Pedido S/ NFe')
 const[pedidoLoading,setPedidoLoading]=useState(false)
-const[editandoVenda,setEditandoVenda]=useState(null)
-const[editProdutos,setEditProdutos]=useState([])
-const[editFormaPgto,setEditFormaPgto]=useState('')
-const[editSituacao,setEditSituacao]=useState('')
-const[editSearch,setEditSearch]=useState('')
-const[editResultados,setEditResultados]=useState([])
-const[editLoading,setEditLoading]=useState(false)
+const[exportLoading,setExportLoading]=useState(false)
+const[editandoOrder,setEditandoOrder]=useState(null)
+const[editOrderProdutos,setEditOrderProdutos]=useState([])
+const[editOrderSearch,setEditOrderSearch]=useState('')
+const[editOrderResultados,setEditOrderResultados]=useState([])
+const[editOrderFormaPgto,setEditOrderFormaPgto]=useState('')
+const[editOrderSituacao,setEditOrderSituacao]=useState('Pedido S/ NFe')
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const loadClients=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('clients').select('*').eq('user_id',user.id).order('name');if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data);setRoutes([...new Set(data.map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
+const loadOrders=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('orders').select('*').eq('user_id',user.id).eq('status','pendente').eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar pedidos.','error');return}setOrders(data||[])},[user?.id])
 const loadGoal=useCallback(async(route)=>{if(!route||!user?.id)return;const{data}=await supabase.from('daily_goals').select('goal_value').eq('user_id',user.id).eq('route',route).eq('date',today()).single();setDailyGoal(data?.goal_value||'')},[user?.id])
-useEffect(()=>{if(user?.id){loadClients();loadSales()}},[loadClients,loadSales,user?.id])
+useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
 useEffect(()=>{loadGoal(selectedRoute)},[selectedRoute,loadGoal])
 const importClients=useCallback(async(rows)=>{if(!user?.id)return;setLoading(true);await supabase.from('clients').delete().eq('user_id',user.id);const toInsert=rows.map(cols=>({user_id:user.id,name:String(cols[0]).trim(),route:String(cols[1]).trim(),inactive:cols[2]&&String(cols[2]).trim().toLowerCase()==='inativo'}));const{error}=await supabase.from('clients').insert(toInsert);if(error){showToast('Erro ao salvar clientes.','error');setLoading(false);return}await loadClients();setSales([]);setSelectedRoute('');setDailyGoal('');setLoading(false);showToast(`${toInsert.length} clientes importados!`)},[user?.id,loadClients])
 const handleFile=useCallback((file)=>{if(!file)return;const reader=new FileReader();reader.onload=async(e)=>{try{const wb=XLSX.read(e.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(ws,{header:1});await importClients(data.slice(1).filter(r=>r[0]&&r[1]))}catch{showToast('Erro ao ler planilha.','error')}};reader.readAsBinaryString(file)},[importClients])
@@ -59,12 +61,14 @@ const handleSetGoal=async()=>{if(!user?.id)return;const v=parseFloat(goalInput);
 const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(parseFloat(saleValue))){showToast('Selecione um cliente e informe o valor.','error');return}const client=clients.find(c=>c.id===selectedClient);const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:client.id,client_name:client.name,route:client.route,value:parseFloat(saleValue),note:saleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setSelectedClient('');setSaleValue('');setSaleNote('');showToast(`Venda de ${fmt(parseFloat(saleValue))} registrada!`)}
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
-const buscarProdutos=async(search)=>{if(search.length<2){setPedidoResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();const filtrado=(Array.isArray(data)?data:[]).filter(p=>p.descricao?.toLowerCase().includes(search.toLowerCase())||p.codigoProprio?.toLowerCase().includes(search.toLowerCase()));setPedidoResultados(filtrado)}catch(err){showToast('Erro ao buscar produtos','error')}}
-const addProdutoPedido=(produto)=>{setPedidoProdutos(prev=>{const existe=prev.find(p=>p.codigo===produto.codigo);if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+1}:p);return[...prev,{...produto,quant:1,vDesc:0}]});setPedidoSearch('');setPedidoResultados([])}
-const totalPedido=pedidoProdutos.reduce((acc,p)=>{const sub=p.precoVenda*p.quant;const desc=sub*(p.vDesc||0)/100;return acc+sub-desc},0)
-const confirmarPedido=async()=>{if(!pedidoCliente||pedidoProdutos.length===0||!pedidoFormaPgto){showToast('Preencha cliente, produtos e forma de pagamento.','error');return}setPedidoLoading(true);try{const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codContato:pedidoCliente.erp_code,nomeContato:pedidoCliente.name,route:pedidoCliente.route,user_id:user.id,produtos:pedidoProdutos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),codFormaPgto:parseInt(pedidoFormaPgto),situacaoOS:pedidoSituacao})});const result=await res.json();if(result.codigo){showToast(`Pedido #${result.codigo} criado!`);setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('');setPedidoSituacao('Pedido S/ NFe');await loadSales()}else{showToast('Erro: '+JSON.stringify(result),'error')}}catch(err){showToast('Erro ao criar pedido','error')}setPedidoLoading(false)}
-const buscarProdutosEdit=async(search)=>{if(search.length<2){setEditResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();setEditResultados(Array.isArray(data)?data:[])}catch(err){showToast('Erro ao buscar produtos','error')}}
-const addProdutoEdit=(produto)=>{setEditProdutos(prev=>{const existe=prev.find(p=>p.codigo===produto.codigo);if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+1}:p);return[...prev,{...produto,quant:1,vDesc:0}]});setEditSearch('');setEditResultados([])}
+const salvarPedido=async()=>{if(!pedidoCliente||pedidoProdutos.length===0||!pedidoFormaPgto){showToast('Preencha cliente, produtos e forma de pagamento.','error');return}setPedidoLoading(true);try{const total=pedidoProdutos.reduce((acc,p)=>{const sub=p.precoVenda*p.quant;const desc=sub*(p.vDesc||0)/100;return acc+sub-desc},0);const{error}=await supabase.from('orders').insert({user_id:user.id,client_id:pedidoCliente.id||null,client_name:pedidoCliente.name,client_erp_code:pedidoCliente.erp_code,route:pedidoCliente.route||'',situacao:pedidoSituacao,forma_pgto:parseInt(pedidoFormaPgto),produtos:pedidoProdutos,total,date:today()});if(error){showToast('Erro ao salvar pedido','error')}else{showToast('Pedido salvo!');setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('');setPedidoSituacao('Pedido S/ NFe');await loadOrders()}}catch(err){showToast('Erro ao salvar pedido','error')}setPedidoLoading(false)}
+const excluirPedido=async(id)=>{const{error}=await supabase.from('orders').delete().eq('id',id);if(error){showToast('Erro ao excluir pedido','error');return}setOrders(prev=>prev.filter(o=>o.id!==id));showToast('Pedido excluído')}
+const exportarPedidos=async()=>{const pendentes=orders.filter(o=>o.status==='pendente');if(pendentes.length===0){showToast('Nenhum pedido pendente','error');return}setExportLoading(true);let ok=0;let erros=0;for(const order of pendentes){try{const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codContato:order.client_erp_code,nomeContato:order.client_name,route:order.route,user_id:user.id,produtos:order.produtos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),codFormaPgto:order.forma_pgto,situacaoOS:order.situacao})});const result=await res.json();if(result.codigo){await supabase.from('orders').delete().eq('id',order.id);ok++}else{erros++}}catch(err){erros++}}await loadOrders();await loadSales();setExportLoading(false);if(erros===0){showToast(`${ok} pedido(s) exportado(s) com sucesso!`)}else{showToast(`${ok} exportado(s), ${erros} com erro`,'error')}}
+const abrirEdicaoOrder=async(order)=>{setEditandoOrder(order);setEditOrderProdutos(order.produtos||[]);setEditOrderFormaPgto(String(order.forma_pgto||'1'));setEditOrderSituacao(order.situacao||'Pedido S/ NFe')}
+const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===0){showToast('Adicione ao menos um produto','error');return}const total=editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0);const{error}=await supabase.from('orders').update({produtos:editOrderProdutos,forma_pgto:parseInt(editOrderFormaPgto),situacao:editOrderSituacao,total}).eq('id',editandoOrder.id);if(error){showToast('Erro ao salvar','error');return}showToast('Pedido atualizado!');setEditandoOrder(null);await loadOrders()}
+const buscarProdutos=async(search,setResultados)=>{if(search.length<2){setResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();const filtrado=(Array.isArray(data)?data:[]).filter(p=>p.descricao?.toLowerCase().includes(search.toLowerCase())||p.codigoProprio?.toLowerCase().includes(search.toLowerCase()));setResultados(filtrado)}catch(err){showToast('Erro ao buscar produtos','error')}}
+const addProduto=(produto,setProdutos,setSearch,setResultados)=>{setProdutos(prev=>{const existe=prev.find(p=>p.codigo===produto.codigo);if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+1}:p);return[...prev,{...produto,quant:1,vDesc:0}]});setSearch('');setResultados([])}
+const totalPedido=pedidoProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0)
 const routeClients=useMemo(()=>selectedRoute?clients.filter(c=>c.route===selectedRoute):[],[clients,selectedRoute])
 const routeSales=useMemo(()=>sales.filter(s=>s.route===selectedRoute),[sales,selectedRoute])
 const soldClientIds=useMemo(()=>new Set(routeSales.map(s=>s.client_id).filter(Boolean)),[routeSales])
@@ -77,27 +81,39 @@ const avgTicket=activeSoldIds.size>0?totalSold/activeSoldIds.size:0
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
 const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch])
-const Tab=({id,label,icon})=><button onClick={()=>setActiveTab(id)} style={{background:activeTab===id?ACCENT:'transparent',color:activeTab===id?'#fff':MUTED,border:'none',borderRadius:8,padding:'6px 10px',fontWeight:600,fontSize:11,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,minWidth:56}}><span style={{fontSize:18}}>{icon}</span><span>{label}</span></button>
+const Tab=({id,label,icon,badge})=><button onClick={()=>setActiveTab(id)} style={{background:activeTab===id?ACCENT:'transparent',color:activeTab===id?'#fff':MUTED,border:'none',borderRadius:8,padding:'6px 10px',fontWeight:600,fontSize:11,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,minWidth:56,position:'relative'}}>
+{badge>0&&<span style={{position:'absolute',top:2,right:8,background:DANGER,color:'#fff',borderRadius:99,fontSize:9,fontWeight:700,padding:'1px 5px'}}>{badge}</span>}
+<span style={{fontSize:18}}>{icon}</span><span>{label}</span></button>
+const FormaPgtoLabel={1:'Dinheiro',2:'Cheque',8:'Pix/Ted',16:'Boleto Sicoob',17:'Déb. Conta'}
+const ProdutoCard=({p,onChange,onRemove})=><div style={{background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 12px',marginBottom:6}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+<span style={{fontWeight:600,fontSize:12,flex:1}}>{p.descricao}</span>
+<button onClick={onRemove} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:14}}>✕</button>
+</div>
+<div style={{display:'flex',gap:6}}>
+<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>QTD</div><input type="number" min="1" value={p.quant} onChange={e=>onChange({...p,quant:parseFloat(e.target.value)||1})} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
+<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>PREÇO</div><input type="number" min="0" step="0.01" value={p.precoVenda} onChange={e=>onChange({...p,precoVenda:parseFloat(e.target.value)||0})} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
+<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>DESC%</div><input type="number" min="0" max="100" value={p.vDesc||0} onChange={e=>onChange({...p,vDesc:parseFloat(e.target.value)||0})} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
+<div style={{flex:1,textAlign:'right'}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>TOTAL</div><div style={{fontWeight:700,color:SUCCESS,fontSize:12}}>{fmt(p.precoVenda*p.quant*(1-(p.vDesc||0)/100))}</div></div>
+</div>
+</div>
 return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',system-ui,sans-serif",color:TEXT,paddingBottom:72}}>
-{/* Header */}
 <div style={{background:CARD,borderBottom:`1px solid ${BORDER}`,padding:'0 16px',position:'sticky',top:0,zIndex:100}}>
 <div style={{display:'flex',alignItems:'center',gap:8,height:52}}>
 <div style={{width:28,height:28,background:ACCENT,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>📦</div>
 <span style={{fontWeight:800,fontSize:16,flex:1}}>CRM Rotas</span>
-<button onClick={()=>{loadClients();loadSales()}} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:12,color:MUTED,cursor:'pointer'}}>🔄</button>
+<button onClick={()=>{loadClients();loadSales();loadOrders()}} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:12,color:MUTED,cursor:'pointer'}}>🔄</button>
 <button onClick={()=>supabase.auth.signOut()} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:11,color:MUTED,cursor:'pointer'}}>Sair</button>
 </div>
 </div>
-{/* Bottom nav */}
 <div style={{position:'fixed',bottom:0,left:0,right:0,background:CARD,borderTop:`1px solid ${BORDER}`,display:'flex',justifyContent:'space-around',padding:'6px 0',zIndex:100}}>
 <Tab id="dashboard" label="Dashboard" icon="📊"/>
 <Tab id="clientes" label="Clientes" icon="👥"/>
 <Tab id="vendas" label="Vendas" icon="💰"/>
-<Tab id="pedido" label="Pedido" icon="🛒"/>
+<Tab id="pedido" label="Pedido" icon="🛒" badge={orders.length}/>
 </div>
 <div style={{padding:'12px 16px'}}>
 {toast&&<div style={{position:'fixed',top:60,left:16,right:16,zIndex:1000,background:toast.type==='error'?DANGER:SUCCESS,color:'#fff',borderRadius:10,padding:'12px 16px',fontWeight:600,fontSize:13,boxShadow:'0 4px 20px #0003',textAlign:'center'}}>{toast.type==='error'?'❌':'✅'} {toast.msg}</div>}
-{/* Rota e importar */}
 <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
 <div style={{flex:'0 0 auto',position:'relative'}}>
 <label htmlFor="xl-input" style={{border:`2px dashed ${dragOver?ACCENT:BORDER}`,borderRadius:10,background:dragOver?ACCENT_LIGHT:CARD,padding:'8px 14px',display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onDrop={e=>{e.preventDefault();setDragOver(false);handleFile(e.dataTransfer.files[0])}} onDragOver={e=>{e.preventDefault();setDragOver(true)}} onDragLeave={()=>setDragOver(false)}>
@@ -128,7 +144,6 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 :<div style={{display:'flex',gap:4}}><input type="number" placeholder="0,00" value={goalInput} onChange={e=>setGoalInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSetGoal()} style={{width:80,border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/><button onClick={handleSetGoal} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button></div>}
 </div>}
 </div>
-{/* DASHBOARD */}
 {activeTab==='dashboard'&&<div>
 {!selectedRoute?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>🗺️</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Selecione uma rota para começar</div></div>
 :<>
@@ -143,11 +158,9 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <span style={{fontWeight:700,fontSize:13}}>💰 Total Vendido</span>
 <span style={{fontWeight:800,fontSize:18,color:totalSold>=(dailyGoal||Infinity)?SUCCESS:ACCENT}}>{fmt(totalSold)}</span>
 </div>
-{dailyGoal>0&&<>
-<div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:MUTED,marginBottom:6}}><span>Meta: {fmt(dailyGoal)}</span><span>{goalProgress.toFixed(1)}%</span></div>
+{dailyGoal>0&&<><div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:MUTED,marginBottom:6}}><span>Meta: {fmt(dailyGoal)}</span><span>{goalProgress.toFixed(1)}%</span></div>
 <div style={{background:SURFACE,borderRadius:99,height:8,overflow:'hidden'}}><div style={{width:`${goalProgress}%`,height:'100%',background:goalProgress>=100?SUCCESS:ACCENT,borderRadius:99,transition:'width 0.4s'}}/></div>
-<div style={{textAlign:'right',marginTop:4,fontSize:11,color:MUTED}}>Faltam {fmt(Math.max(dailyGoal-totalSold,0))}</div>
-</>}
+<div style={{textAlign:'right',marginTop:4,fontSize:11,color:MUTED}}>Faltam {fmt(Math.max(dailyGoal-totalSold,0))}</div></>}
 </div>
 {inactiveSoldClients.length>0&&<div style={{background:'#FFF7ED',border:`1.5px solid ${WARNING}55`,borderRadius:12,padding:'12px 14px',marginBottom:12}}>
 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
@@ -158,7 +171,6 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 {inactiveSoldClients.map(s=><div key={s.id} style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0',borderTop:`1px solid ${WARNING}22`}}>
 <span style={{fontWeight:600}}>{s.client_name}</span><Badge color={WARNING}>{fmt(s.value)}</Badge>
 </div>)}
-<div style={{marginTop:6,fontSize:10,color:WARNING,fontStyle:'italic'}}>* Incluídos no total vendido.</div>
 </div>}
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>💰 Registrar Venda</div>
@@ -173,17 +185,13 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 {routeSales.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
 <div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>Vendas de Hoje</div>
 {[...routeSales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}>
-<div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
-<div style={{fontSize:11,color:MUTED}}>{s.sale_time} {s.note?'• '+s.note:''}</div>
-</div>
+<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div><div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.note?' • '+s.note:''}</div></div>
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 <button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
 </div>)}
 </div>}
 </>}
 </div>}
-{/* CLIENTES */}
 {activeTab==='clientes'&&<div>
 {clients.length===0?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>📂</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Nenhuma planilha importada</div></div>
 :<><div style={{display:'flex',gap:8,marginBottom:12,alignItems:'center'}}>
@@ -191,10 +199,7 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <Badge color={ACCENT}>{filteredClients.length}</Badge>
 </div>
 {filteredClients.map((c,i)=><div key={c.id} style={{background:c.inactive?'#FFF7ED':CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'10px 14px',marginBottom:6,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}>
-<div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
-<div style={{fontSize:11,color:MUTED,marginTop:2}}><Badge color={ACCENT}>{c.route}</Badge></div>
-</div>
+<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:MUTED,marginTop:2}}><Badge color={ACCENT}>{c.route}</Badge></div></div>
 <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
 {c.inactive?<Badge color={WARNING}>⛔ Inativo</Badge>:<Badge color={SUCCESS}>✓ Ativo</Badge>}
 {soldClientIds.has(c.id)?<Badge color={SUCCESS}>✅ Vendido</Badge>:selectedRoute===c.route?<Badge color={MUTED}>⏳ Pendente</Badge>:null}
@@ -202,12 +207,11 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 </div>)}
 </>}
 </div>}
-{/* VENDAS */}
 {activeTab==='vendas'&&<div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>💰 Registrar Venda</div>
 <div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder={selectedRoute?`Buscar cliente na ${selectedRoute}…`:'Buscar cliente…'} value={tabSaleClientInput}
+<input type="text" placeholder="Buscar cliente…" value={tabSaleClientInput}
 onChange={e=>{setTabSaleClientInput(e.target.value);setTabSaleClient(null);setShowSuggestions(true)}}
 onFocus={()=>setShowSuggestions(true)} onBlur={()=>setTimeout(()=>setShowSuggestions(false),150)}
 style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
@@ -233,53 +237,48 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 {sales.length===0?<div style={{textAlign:'center',padding:'40px 20px',color:MUTED,background:CARD,border:`1px solid ${BORDER}`,borderRadius:12}}><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontWeight:700}}>Nenhuma venda hoje</div></div>
 :<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
 {[...sales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}>
-<div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
-<div style={{fontSize:11,color:MUTED}}>{s.sale_time} • {s.route} {s.note?'• '+s.note:''}</div>
-</div>
+<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div><div style={{fontSize:11,color:MUTED}}>{s.sale_time} • {s.route}{s.note?' • '+s.note:''}</div></div>
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 <button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
 </div>)}
 </div>}
 </div>}
-{/* PEDIDO */}
 {activeTab==='pedido'&&<div>
-{editandoVenda&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:500,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+{editandoOrder&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:500,display:'flex',alignItems:'flex-end'}}>
 <div style={{background:CARD,borderRadius:'16px 16px 0 0',padding:20,width:'100%',maxHeight:'90vh',overflowY:'auto'}}>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-<div style={{fontWeight:800,fontSize:15}}>✏️ Editar #{editandoVenda.erp_code}</div>
-<button onClick={()=>setEditandoVenda(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:MUTED}}>✕</button>
+<div style={{fontWeight:800,fontSize:15}}>✏️ Editar Pedido</div>
+<button onClick={()=>setEditandoOrder(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:MUTED}}>✕</button>
 </div>
-<select value={editSituacao} onChange={e=>setEditSituacao(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<div style={{fontWeight:600,fontSize:13,color:ACCENT,marginBottom:12}}>{editandoOrder.client_name}</div>
+<select value={editOrderSituacao} onChange={e=>setEditOrderSituacao(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option>Pedido S/ NFe</option><option>Pedido C/ NFe</option><option>Bonificação</option><option>Troca</option>
 </select>
-<select value={editFormaPgto} onChange={e=>setEditFormaPgto(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<select value={editOrderFormaPgto} onChange={e=>setEditOrderFormaPgto(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="1">Dinheiro</option><option value="2">Cheque</option><option value="8">Pix/Ted</option><option value="16">Boleto Sicoob</option><option value="17">Débito em Conta</option>
 </select>
 <div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder="Buscar produto…" value={editSearch} onChange={e=>{setEditSearch(e.target.value);buscarProdutosEdit(e.target.value)}} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
-{editResultados.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:180,overflowY:'auto'}}>
-{editResultados.map(p=><div key={p.codigo} onMouseDown={()=>addProdutoEdit(p)} style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+<input type="text" placeholder="Buscar produto…" value={editOrderSearch}
+onChange={e=>{setEditOrderSearch(e.target.value);buscarProdutos(e.target.value,setEditOrderResultados)}}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
+{editOrderResultados.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:180,overflowY:'auto'}}>
+{editOrderResultados.map(p=><div key={p.codigo} onMouseDown={()=>addProduto(p,setEditOrderProdutos,setEditOrderSearch,setEditOrderResultados)}
+style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}}
+onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT}
+onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <div style={{fontWeight:600}}>{p.descricao}</div><div style={{fontSize:11,color:MUTED}}>{fmt(p.precoVenda)}</div>
 </div>)}
 </div>}
 </div>
-{editProdutos.map((p,i)=><div key={p.codigo} style={{background:i%2===0?CARD:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 12px',marginBottom:6}}>
-<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-<span style={{fontWeight:600,fontSize:12,flex:1}}>{p.descricao}</span>
-<button onClick={()=>setEditProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:14}}>✕</button>
+{editOrderProdutos.map(p=><ProdutoCard key={p.codigo} p={p}
+onChange={np=>setEditOrderProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))}
+onRemove={()=>setEditOrderProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
+<div style={{textAlign:'right',fontWeight:800,fontSize:16,color:ACCENT,margin:'8px 0 12px'}}>
+Total: {fmt(editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0))}
 </div>
-<div style={{display:'flex',gap:6}}>
-<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>QTD</div><input type="number" min="1" value={p.quant} onChange={e=>setEditProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:parseFloat(e.target.value)||1}:x))} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
-<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>PREÇO</div><input type="number" min="0" step="0.01" value={p.precoVenda} onChange={e=>setEditProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,precoVenda:parseFloat(e.target.value)||0}:x))} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
-<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>DESC%</div><input type="number" min="0" max="100" value={p.vDesc||0} onChange={e=>setEditProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,vDesc:parseFloat(e.target.value)||0}:x))} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
-<div style={{flex:1,textAlign:'right'}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>TOTAL</div><div style={{fontWeight:700,color:SUCCESS,fontSize:12}}>{fmt(p.precoVenda*p.quant*(1-(p.vDesc||0)/100))}</div></div>
-</div>
-</div>)}
-<div style={{textAlign:'right',fontWeight:800,fontSize:16,color:ACCENT,marginBottom:12}}>Total: {fmt(editProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0))}</div>
 <div style={{display:'flex',gap:8}}>
-<button onClick={()=>setEditandoVenda(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Cancelar</button>
-<button onClick={async()=>{if(!editandoVenda||editProdutos.length===0){showToast('Adicione ao menos um produto','error');return}setEditLoading(true);try{const res=await fetch(`${EGESTOR_API}?action=editar_venda`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codVenda:editandoVenda.erp_code,codContato:editandoVenda.egestor?.codContato,user_id:user.id,produtos:editProdutos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),codFormaPgto:editFormaPgto,situacaoOS:editSituacao})});const result=await res.json();if(result.codigo||result.success){showToast('Atualizado!');setEditandoVenda(null);await loadSales()}else{showToast('Erro: '+JSON.stringify(result),'error')}}catch(err){showToast('Erro','error')}setEditLoading(false)}} disabled={editLoading} style={{flex:2,background:editLoading?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>{editLoading?'Salvando…':'💾 Salvar'}</button>
+<button onClick={()=>setEditandoOrder(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Cancelar</button>
+<button onClick={salvarEdicaoOrder} style={{flex:2,background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>💾 Salvar</button>
 </div>
 </div>
 </div>}
@@ -301,30 +300,46 @@ onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <option value="1">Dinheiro</option><option value="2">Cheque</option><option value="8">Pix/Ted</option><option value="16">Boleto Sicoob</option><option value="17">Débito em Conta</option>
 </select>
 <div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder="Buscar produto…" value={pedidoSearch} onChange={e=>{setPedidoSearch(e.target.value);buscarProdutos(e.target.value)}} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
+<input type="text" placeholder="Buscar produto…" value={pedidoSearch}
+onChange={e=>{setPedidoSearch(e.target.value);buscarProdutos(e.target.value,setPedidoResultados)}}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
 {pedidoResultados.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:220,overflowY:'auto'}}>
-{pedidoResultados.map(p=><div key={p.codigo} onMouseDown={()=>addProdutoPedido(p)} style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+{pedidoResultados.map(p=><div key={p.codigo} onMouseDown={()=>addProduto(p,setPedidoProdutos,setPedidoSearch,setPedidoResultados)}
+style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}}
+onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT}
+onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
 <div style={{fontWeight:600}}>{p.descricao}</div><div style={{fontSize:11,color:MUTED}}>Cód: {p.codigoProprio} • {fmt(p.precoVenda)}</div>
 </div>)}
 </div>}
 </div>
-{pedidoProdutos.map((p,i)=><div key={p.codigo} style={{background:i%2===0?CARD:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 12px',marginBottom:6}}>
-<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-<span style={{fontWeight:600,fontSize:12,flex:1}}>{p.descricao}</span>
-<button onClick={()=>setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:14}}>✕</button>
-</div>
-<div style={{display:'flex',gap:6}}>
-<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>QTD</div><input type="number" min="1" value={p.quant} onChange={e=>setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:parseFloat(e.target.value)||1}:x))} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
-<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>PREÇO</div><input type="number" min="0" step="0.01" value={p.precoVenda} onChange={e=>setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,precoVenda:parseFloat(e.target.value)||0}:x))} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
-<div style={{flex:1}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>DESC%</div><input type="number" min="0" max="100" value={p.vDesc||0} onChange={e=>setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,vDesc:parseFloat(e.target.value)||0}:x))} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 8px',fontSize:13,boxSizing:'border-box'}}/></div>
-<div style={{flex:1,textAlign:'right'}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>TOTAL</div><div style={{fontWeight:700,color:SUCCESS,fontSize:12}}>{fmt(p.precoVenda*p.quant*(1-(p.vDesc||0)/100))}</div></div>
-</div>
-</div>)}
+{pedidoProdutos.map(p=><ProdutoCard key={p.codigo} p={p}
+onChange={np=>setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))}
+onRemove={()=>setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
 {pedidoProdutos.length>0&&<div style={{textAlign:'right',fontWeight:800,fontSize:18,color:ACCENT,margin:'8px 0 12px'}}>Total: {fmt(totalPedido)}</div>}
-<button onClick={confirmarPedido} disabled={pedidoLoading} style={{width:'100%',background:pedidoLoading?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:700,fontSize:15,cursor:pedidoLoading?'not-allowed':'pointer'}}>
-{pedidoLoading?'Criando…':'✅ Confirmar Pedido'}
+<button onClick={salvarPedido} disabled={pedidoLoading} style={{width:'100%',background:pedidoLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:700,fontSize:15,cursor:pedidoLoading?'not-allowed':'pointer'}}>
+{pedidoLoading?'Salvando…':'💾 Salvar Pedido'}
 </button>
 </div>
+{orders.length>0&&<>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+<div style={{fontWeight:700,fontSize:14}}>Pedidos Pendentes ({orders.length})</div>
+<div style={{fontWeight:800,fontSize:13,color:ACCENT}}>{fmt(orders.reduce((a,o)=>a+o.total,0))}</div>
+</div>
+{orders.map(o=><div key={o.id} style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:8}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+<div><div style={{fontWeight:700,fontSize:13}}>{o.client_name}</div><div style={{fontSize:11,color:MUTED}}>{o.situacao} • {FormaPgtoLabel[o.forma_pgto]||o.forma_pgto}</div></div>
+<div style={{textAlign:'right'}}><div style={{fontWeight:800,color:SUCCESS,fontSize:15}}>{fmt(o.total)}</div><div style={{fontSize:10,color:MUTED}}>{o.produtos?.length} produto(s)</div></div>
+</div>
+<div style={{fontSize:11,color:MUTED,marginBottom:8}}>{o.produtos?.map(p=>`${p.descricao} x${p.quant}`).join(', ')}</div>
+<div style={{display:'flex',gap:6}}>
+<button onClick={()=>abrirEdicaoOrder(o)} style={{flex:1,background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:600,color:TEXT,cursor:'pointer'}}>✏️ Editar</button>
+<button onClick={()=>excluirPedido(o.id)} style={{flex:1,background:'#FEF2F2',border:`1px solid ${DANGER}33`,borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:600,color:DANGER,cursor:'pointer'}}>🗑️ Excluir</button>
+</div>
+</div>)}
+<button onClick={exportarPedidos} disabled={exportLoading} style={{width:'100%',background:exportLoading?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:10,padding:'14px 0',fontWeight:800,fontSize:15,cursor:exportLoading?'not-allowed':'pointer',marginTop:4}}>
+{exportLoading?'Exportando…':'🚀 Exportar para eGestor'}
+</button>
+</>}
 </div>}
 </div>
 </div>)
