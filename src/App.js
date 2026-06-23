@@ -117,8 +117,7 @@ const ProdutoCard=({p,onChange,onRemove})=><div style={{background:SURFACE,borde
 return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',system-ui,sans-serif",color:TEXT,paddingBottom:72}}>
 <div style={{background:CARD,borderBottom:`1px solid ${BORDER}`,padding:'0 16px',position:'sticky',top:0,zIndex:100}}>
 <div style={{display:'flex',alignItems:'center',gap:8,height:52}}>
-<div style={{width:28,height:28,background:ACCENT,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>📦</div>
-<span style={{fontWeight:800,fontSize:16,flex:1}}>CRM Rotas</span>
+<img src="/logo.png" alt="eXpande CRM" style={{height:36,objectFit:'contain',flex:1}}/>
 <button onClick={()=>{loadClients();loadSales();loadOrders()}} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:12,color:MUTED,cursor:'pointer'}}>🔄</button>
 <button onClick={()=>supabase.auth.signOut()} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:11,color:MUTED,cursor:'pointer'}}>Sair</button>
 </div>
