@@ -278,40 +278,71 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 </>}
 </div>}
 {activeTab==='vendas'&&<div>
+{(()=>{
+const totalExportado=sales.reduce((a,s)=>a+s.value,0)
+const totalPendente=orders.reduce((a,o)=>a+o.total,0)
+const totalGeral=totalExportado+totalPendente
+const progresso=dailyGoal>0?Math.min((totalGeral/dailyGoal)*100,100):0
+return<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
-<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>💰 Registrar Venda</div>
-<div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder="Buscar cliente…" value={tabSaleClientInput}
-onChange={e=>{setTabSaleClientInput(e.target.value);setTabSaleClient(null);setShowSuggestions(true)}}
-onFocus={()=>setShowSuggestions(true)} onBlur={()=>setTimeout(()=>setShowSuggestions(false),150)}
-style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
-{showSuggestions&&clientSuggestions.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:200,overflowY:'auto'}}>
-{clientSuggestions.map(c=><div key={c.id} onMouseDown={()=>{setTabSaleClient(c);setTabSaleClientInput(c.name);setShowSuggestions(false)}}
-style={{padding:'10px 14px',cursor:'pointer',fontSize:13,borderBottom:`1px solid ${BORDER}`}}
-onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT}
-onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-<span style={{fontWeight:600}}>{c.name}</span>
-{c.inactive&&<span style={{marginLeft:6}}><Badge color={WARNING}>Inativo</Badge></span>}
-</div>)}
-</div>}
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+<span style={{fontWeight:700,fontSize:14}}>💰 Total do Dia</span>
+<span style={{fontWeight:800,fontSize:18,color:ACCENT}}>{fmt(totalGeral)}</span>
 </div>
-<input type="number" placeholder="Valor (R$)" value={tabSaleValue} onChange={e=>setTabSaleValue(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
-<input type="text" placeholder="Observação (opcional)" value={tabSaleNote} onChange={e=>setTabSaleNote(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
-<button onClick={handleAddTabSale} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>+ Registrar</button>
+{dailyGoal>0&&<>
+<div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:MUTED,marginBottom:6}}>
+<span>Meta: {fmt(dailyGoal)}</span><span>{progresso.toFixed(1)}%</span>
 </div>
-{sales.length>0&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
-<KpiCard label="Vendas" value={sales.length} sub="hoje"/>
-<KpiCard label="Receita" value={fmt(sales.reduce((a,s)=>a+s.value,0))} color={SUCCESS}/>
-<KpiCard label="Ticket" value={fmt(sales.reduce((a,s)=>a+s.value,0)/sales.length)} color={ACCENT}/>
-</div>}
-{sales.length===0?<div style={{textAlign:'center',padding:'40px 20px',color:MUTED,background:CARD,border:`1px solid ${BORDER}`,borderRadius:12}}><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontWeight:700}}>Nenhuma venda hoje</div></div>
-:<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
+<div style={{background:SURFACE,borderRadius:99,height:8,overflow:'hidden'}}>
+<div style={{width:`${progresso}%`,height:'100%',background:progresso>=100?SUCCESS:ACCENT,borderRadius:99,transition:'width 0.4s'}}/>
+</div>
+<div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:11,color:MUTED}}>
+<span>✅ Exportado: {fmt(totalExportado)}</span>
+<span>📋 Pendente: {fmt(totalPendente)}</span>
+</div>
+</>}
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:12}}>
+<div style={{background:SURFACE,borderRadius:8,padding:'8px',textAlign:'center'}}>
+<div style={{fontWeight:800,fontSize:16,color:SUCCESS}}>{sales.length}</div>
+<div style={{fontSize:10,color:MUTED,fontWeight:600}}>EXPORTADOS</div>
+</div>
+<div style={{background:SURFACE,borderRadius:8,padding:'8px',textAlign:'center'}}>
+<div style={{fontWeight:800,fontSize:16,color:WARNING}}>{orders.length}</div>
+<div style={{fontSize:10,color:MUTED,fontWeight:600}}>PENDENTES</div>
+</div>
+<div style={{background:SURFACE,borderRadius:8,padding:'8px',textAlign:'center'}}>
+<div style={{fontWeight:800,fontSize:16,color:ACCENT}}>{sales.length+orders.length}</div>
+<div style={{fontSize:10,color:MUTED,fontWeight:600}}>TOTAL</div>
+</div>
+</div>
+</div>
+{sales.length>0&&<>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8,color:SUCCESS}}>✅ Exportados para eGestor ({sales.length})</div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
 {[...sales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div><div style={{fontSize:11,color:MUTED}}>{s.sale_time} • {s.route}{s.note?' • '+s.note:''}</div></div>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
+<div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.route?' • '+s.route:''}{s.note?' • '+s.note:''}</div>
+</div>
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
-<button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
 </div>)}
-</div>}
+</div>
+</>}
+{orders.length>0&&<>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8,color:WARNING}}>📋 A Exportar ({orders.length})</div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+{orders.map((o,i)=><div key={o.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{o.client_name}</div>
+<div style={{fontSize:11,color:MUTED}}>{o.situacao} • {o.produtos?.length} produto(s)</div>
+</div>
+<Badge color={WARNING}>{fmt(o.total)}</Badge>
+</div>)}
+</div>
+{orders.length>0&&<button onClick={()=>setActiveTab('pedido')} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:10,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🚀 Ir para Exportar</button>}
+</>}
+{sales.length===0&&orders.length===0&&<div style={{textAlign:'center',padding:'40px 20px',color:MUTED,background:CARD,border:`1px solid ${BORDER}`,borderRadius:12}}><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontWeight:700}}>Nenhuma venda hoje</div></div>}
+</>})()}
 </div>}
 {activeTab==='pedido'&&<div>
 {editandoOrder&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:500,display:'flex',alignItems:'flex-end'}}>
