@@ -51,7 +51,7 @@ const[editOrderResultados,setEditOrderResultados]=useState([])
 const[editOrderFormaPgto,setEditOrderFormaPgto]=useState('')
 const[editOrderSituacao,setEditOrderSituacao]=useState('Pedido S/ NFe')
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
-const loadClients=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('clients').select('*').eq('user_id',user.id).order('name');if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data);setRoutes([...new Set(data.map(c=>c.route))].sort())},[user?.id])
+const loadClients=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('clients').select('*').eq('user_id',user.id).order('route').order('ordem');if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data);setRoutes([...new Set(data.map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
 const loadOrders=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('orders').select('*').eq('user_id',user.id).eq('status','pendente').eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar pedidos.','error');return}setOrders(data||[])},[user?.id])
 const loadGoal=useCallback(async(route)=>{if(!route||!user?.id)return;const{data}=await supabase.from('daily_goals').select('goal_value').eq('user_id',user.id).eq('route',route).eq('date',today()).single();setDailyGoal(data?.goal_value||'')},[user?.id])
@@ -64,6 +64,19 @@ const handleSetGoal=async()=>{if(!user?.id)return;const v=parseFloat(goalInput);
 const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(parseFloat(saleValue))){showToast('Selecione um cliente e informe o valor.','error');return}const client=clients.find(c=>c.id===selectedClient);const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:client.id,client_name:client.name,route:client.route,value:parseFloat(saleValue),note:saleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setSelectedClient('');setSaleValue('');setSaleNote('');showToast(`Venda de ${fmt(parseFloat(saleValue))} registrada!`)}
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
+const moverCliente=async(clienteId,direcao,rota)=>{
+  const rotaClients=clients.filter(c=>c.route===rota).sort((a,b)=>a.ordem-b.ordem)
+  const idx=rotaClients.findIndex(c=>c.id===clienteId)
+  if(direcao==='up'&&idx===0)return
+  if(direcao==='down'&&idx===rotaClients.length-1)return
+  const outro=direcao==='up'?rotaClients[idx-1]:rotaClients[idx+1]
+  const atual=rotaClients[idx]
+  const novaOrdemAtual=outro.ordem
+  const novaOrdemOutro=atual.ordem
+  await supabase.from('clients').update({ordem:novaOrdemAtual}).eq('id',atual.id)
+  await supabase.from('clients').update({ordem:novaOrdemOutro}).eq('id',outro.id)
+  await loadClients()
+}
 const abrirPerfil=async(cliente)=>{setClientePerfil(cliente);setPerfilData(null);setPerfilLoading(true);try{const res=await fetch(`${EGESTOR_API}?action=perfil_cliente&codContato=${cliente.erp_code}`);const data=await res.json();setPerfilData(data)}catch(err){showToast('Erro ao buscar perfil','error')}setPerfilLoading(false)}
 const salvarPedido=async()=>{if(!pedidoCliente||pedidoProdutos.length===0||!pedidoFormaPgto){showToast('Preencha cliente, produtos e forma de pagamento.','error');return}setPedidoLoading(true);try{const total=pedidoProdutos.reduce((acc,p)=>{const sub=p.precoVenda*p.quant;const desc=sub*(p.vDesc||0)/100;return acc+sub-desc},0);const{error}=await supabase.from('orders').insert({user_id:user.id,client_id:pedidoCliente.id||null,client_name:pedidoCliente.name,client_erp_code:pedidoCliente.erp_code,route:pedidoCliente.route||'',situacao:pedidoSituacao,forma_pgto:parseInt(pedidoFormaPgto),produtos:pedidoProdutos,total,date:today()});if(error){showToast('Erro ao salvar pedido','error')}else{showToast('Pedido salvo!');setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('');setPedidoSituacao('Pedido S/ NFe');await loadOrders()}}catch(err){showToast('Erro ao salvar pedido','error')}setPedidoLoading(false)}
 const excluirPedido=async(id)=>{const{error}=await supabase.from('orders').delete().eq('id',id);if(error){showToast('Erro ao excluir pedido','error');return}setOrders(prev=>prev.filter(o=>o.id!==id));showToast('Pedido excluído')}
@@ -238,8 +251,15 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <input type="text" placeholder="🔍 Buscar cliente…" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} style={{flex:1,border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14}}/>
 <Badge color={ACCENT}>{filteredClients.length}</Badge>
 </div>
-{filteredClients.map((c,i)=><div key={c.id} onClick={()=>abrirPerfil(c)} style={{background:c.inactive?'#FFF7ED':CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'10px 14px',marginBottom:6,display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:MUTED,marginTop:2}}><Badge color={ACCENT}>{c.route}</Badge></div></div>
+{filteredClients.map((c,i)=><div key={c.id} style={{background:c.inactive?'#FFF7ED':CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'10px 14px',marginBottom:6,display:'flex',alignItems:'center',gap:8}}>
+<div style={{display:'flex',flexDirection:'column',gap:2,marginRight:4}}>
+<button onClick={()=>moverCliente(c.id,'up',c.route)} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:4,padding:'2px 6px',fontSize:10,cursor:'pointer',color:MUTED,lineHeight:1}}>▲</button>
+<button onClick={()=>moverCliente(c.id,'down',c.route)} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:4,padding:'2px 6px',fontSize:10,cursor:'pointer',color:MUTED,lineHeight:1}}>▼</button>
+</div>
+<div style={{flex:1,cursor:'pointer'}} onClick={()=>abrirPerfil(c)}>
+<div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
+<div style={{fontSize:11,color:MUTED,marginTop:2}}><Badge color={ACCENT}>{c.route}</Badge></div>
+</div>
 <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
 {c.inactive?<Badge color={WARNING}>⛔ Inativo</Badge>:<Badge color={SUCCESS}>✓ Ativo</Badge>}
 {soldClientIds.has(c.id)?<Badge color={SUCCESS}>✅ Vendido</Badge>:selectedRoute===c.route?<Badge color={MUTED}>⏳ Pendente</Badge>:null}
