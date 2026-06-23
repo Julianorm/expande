@@ -117,7 +117,7 @@ const ProdutoCard=({p,onChange,onRemove})=><div style={{background:SURFACE,borde
 return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',system-ui,sans-serif",color:TEXT,paddingBottom:72}}>
 <div style={{background:CARD,borderBottom:`1px solid ${BORDER}`,padding:'0 16px',position:'sticky',top:0,zIndex:100}}>
 <div style={{display:'flex',alignItems:'center',gap:8,height:52}}>
-<img src="/logo.png" alt="eXpande CRM" style={{height:36,objectFit:'contain',flex:1}}/>
+<img src="/ChatGPT_Image_23_de_jun__de_2026__09_18_25.png" alt="eXpande CRM" style={{height:36,objectFit:'contain',flex:1}}/>
 <button onClick={()=>{loadClients();loadSales();loadOrders()}} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:12,color:MUTED,cursor:'pointer'}}>🔄</button>
 <button onClick={()=>supabase.auth.signOut()} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:11,color:MUTED,cursor:'pointer'}}>Sair</button>
 </div>
