@@ -225,15 +225,25 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <span style={{fontWeight:600}}>{s.client_name}</span><Badge color={WARNING}>{fmt(s.value)}</Badge>
 </div>)}
 </div>}
-<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
-<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>💰 Registrar Venda</div>
-<select value={selectedClient} onChange={e=>setSelectedClient(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option value="">Selecionar cliente…</option>
-{routeClients.map(c=><option key={c.id} value={c.id}>{soldClientIds.has(c.id)?'✅ ':''}{c.name}{c.inactive?' ⛔':''}</option>)}
-</select>
-<input type="number" placeholder="Valor (R$)" value={saleValue} onChange={e=>setSaleValue(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
-<input type="text" placeholder="Observação (opcional)" value={saleNote} onChange={e=>setSaleNote(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
-<button onClick={handleAddSale} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>+ Registrar Venda</button>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span>🗺️ Mapa da Rota</span>
+<Badge color={ACCENT}>{routeClients.length} clientes</Badge>
+</div>
+{routeClients.length===0?<div style={{textAlign:'center',padding:'20px',color:MUTED}}>Nenhum cliente nesta rota</div>
+:routeClients.map((c,i)=>{
+const vendido=soldClientIds.has(c.id)||orders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+const temPedido=orders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,cursor:'pointer',background:vendido?'#F0FDF4':c.inactive?'#FFF7ED':'transparent'}}>
+<div style={{width:28,height:28,borderRadius:99,background:temPedido?WARNING:vendido?SUCCESS:c.inactive?'#FEE2E2':BORDER,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,flexShrink:0,color:'#fff',fontWeight:700}}>
+{temPedido?'📋':vendido?'✓':c.inactive?'⛔':i+1}
+</div>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
+<div style={{fontSize:11,color:MUTED}}>{temPedido?'Pedido pendente':vendido?'Atendido':'Aguardando visita'}</div>
+</div>
+<span style={{color:MUTED,fontSize:16}}>›</span>
+</div>})}
 </div>
 {routeSales.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
 <div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>Vendas de Hoje</div>
