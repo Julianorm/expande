@@ -103,7 +103,8 @@ const confirmarProdutoModal=()=>{
     return[...prev,{...produto,quant:produtoModalQuant,vDesc:produtoModalDesc}]
   })
   setProdutoModal(null)
-}const totalPedido=pedidoProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0)
+}
+const totalPedido=pedidoProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0)
 const routeClients=useMemo(()=>selectedRoute?clients.filter(c=>c.route===selectedRoute):[],[clients,selectedRoute])
 const routeSales=useMemo(()=>sales.filter(s=>s.route===selectedRoute),[sales,selectedRoute])
 const soldClientIds=useMemo(()=>new Set(routeSales.map(s=>s.client_id).filter(Boolean)),[routeSales])
