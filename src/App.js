@@ -492,8 +492,7 @@ return<>
 {u.id!==ADMIN_ID&&<div style={{marginBottom:8}}>
 <div style={{fontSize:11,fontWeight:600,color:MUTED,marginBottom:6}}>ROTAS DO VENDEDOR</div>
 <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
-{['AFONSO CLAUDIO','BREJETUBA','DOMINGOS MARTINS','LARANJA DA TERRA','SANTA MARIA','SANTA TERESA','VENDA NOVA'].map(rota=>{const temRota=(u.config?.rotas||[]).includes(rota);return<button key={rota} onClick={async()=>{const novasRotas=temRota?(u.config?.rotas||[]).filter(r=>r!==rota):[...(u.config?.rotas||[]),rota];await supabase.from('user_config').update({rotas:novasRotas}).eq('user_id',u.id);await carregarConfig()}} style={{background:temRota?ACCENT:SURFACE,color:temRota?'#fff':MUTED,border:`1px solid ${temRota?ACCENT:BORDER}`,borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer'}}>{rota}</button>})}
-</div>
+{['AFONSO CLAUDIO','BREJETUBA','DOMINGOS MARTINS','LARANJA DA TERRA','SANTA MARIA','SANTA TERESA','VENDA NOVA'].map(rota=>{const temRota=(u.config?.rotas||[]).includes(rota);return<button key={rota} onClick={async()=>{const novasRotas=temRota?(u.config?.rotas||[]).filter(r=>r!==rota):[...(u.config?.rotas||[]),rota];const{error}=await supabase.from('user_config').update({rotas:novasRotas}).eq('user_id',u.id);if(error){showToast('Erro: '+error.message,'error');return}showToast('Rota atualizada!');await carregarConfig()}} style={{background:temRota?ACCENT:SURFACE,color:temRota?'#fff':MUTED,border:`1px solid ${temRota?ACCENT:BORDER}`,borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer'}}>{rota}</button>})}</div>
 </div>}
 {u.id!==ADMIN_ID&&<div style={{display:'flex',gap:8}}>
 <input type="password" placeholder="Nova senha…" value={senhaUser[u.id]||''} onChange={e=>setSenhaUser(prev=>({...prev,[u.id]:e.target.value}))} style={{flex:1,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 10px',fontSize:13,boxSizing:'border-box'}}/>
