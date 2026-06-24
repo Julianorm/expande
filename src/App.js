@@ -616,3 +616,6 @@ onRemove={()=>setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
 </button>
 </div>
 </div>}
+</div>
+</div>)
+}
