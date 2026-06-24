@@ -43,6 +43,9 @@ const[pedidoLoading,setPedidoLoading]=useState(false)
 const[clientePerfil,setClientePerfil]=useState(null)
 const[perfilData,setPerfilData]=useState(null)
 const[perfilLoading,setPerfilLoading]=useState(false)
+const[produtoModal,setProdutoModal]=useState(null)
+const[produtoModalQuant,setProdutoModalQuant]=useState(1)
+const[produtoModalDesc,setProdutoModalDesc]=useState(0)
 const[exportLoading,setExportLoading]=useState(false)
 const[editandoOrder,setEditandoOrder]=useState(null)
 const[editOrderProdutos,setEditOrderProdutos]=useState([])
@@ -84,8 +87,23 @@ const exportarPedidos=async()=>{const pendentes=orders.filter(o=>o.status==='pen
 const abrirEdicaoOrder=async(order)=>{setEditandoOrder(order);setEditOrderProdutos(order.produtos||[]);setEditOrderFormaPgto(String(order.forma_pgto||'1'));setEditOrderSituacao(order.situacao||'Pedido S/ NFe')}
 const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===0){showToast('Adicione ao menos um produto','error');return}const total=editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0);const{error}=await supabase.from('orders').update({produtos:editOrderProdutos,forma_pgto:parseInt(editOrderFormaPgto),situacao:editOrderSituacao,total}).eq('id',editandoOrder.id);if(error){showToast('Erro ao salvar','error');return}showToast('Pedido atualizado!');setEditandoOrder(null);await loadOrders()}
 const buscarProdutos=async(search,setResultados)=>{if(search.length<2){setResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();const filtrado=(Array.isArray(data)?data:[]).filter(p=>p.descricao?.toLowerCase().includes(search.toLowerCase())||p.codigoProprio?.toLowerCase().includes(search.toLowerCase()));setResultados(filtrado)}catch(err){showToast('Erro ao buscar produtos','error')}}
-const addProduto=(produto,setProdutos,setSearch,setResultados)=>{setProdutos(prev=>{const existe=prev.find(p=>p.codigo===produto.codigo);if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+1}:p);return[...prev,{...produto,quant:1,vDesc:0}]});setSearch('');setResultados([]);setTimeout(()=>{const input=document.querySelector('input[placeholder="Buscar produto…"]');if(input)input.focus()},100)}
-const totalPedido=pedidoProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0)
+const addProduto=(produto,setProdutos,setSearch,setResultados)=>{
+  setProdutoModal({produto,setProdutos,setSearch,setResultados})
+  setProdutoModalQuant(1)
+  setProdutoModalDesc(0)
+  setSearch('')
+  setResultados([])
+}
+const confirmarProdutoModal=()=>{
+  if(!produtoModal)return
+  const{produto,setProdutos}=produtoModal
+  setProdutos(prev=>{
+    const existe=prev.find(p=>p.codigo===produto.codigo)
+    if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+produtoModalQuant,vDesc:produtoModalDesc}:p)
+    return[...prev,{...produto,quant:produtoModalQuant,vDesc:produtoModalDesc}]
+  })
+  setProdutoModal(null)
+}const totalPedido=pedidoProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0)
 const routeClients=useMemo(()=>selectedRoute?clients.filter(c=>c.route===selectedRoute):[],[clients,selectedRoute])
 const routeSales=useMemo(()=>sales.filter(s=>s.route===selectedRoute),[sales,selectedRoute])
 const soldClientIds=useMemo(()=>new Set(routeSales.map(s=>s.client_id).filter(Boolean)),[routeSales])
@@ -186,6 +204,35 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <div style={{display:'flex',gap:8,marginTop:16}}>
 <button onClick={()=>setClientePerfil(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Fechar</button>
 <button onClick={()=>{setPedidoCliente(clientePerfil);setClientePerfil(null);setActiveTab('pedido')}} style={{flex:2,background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🛒 Fazer Pedido</button>
+</div>
+</div>
+</div>}
+{produtoModal&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:600,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+<div style={{background:CARD,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
+<div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{produtoModal.produto.descricao}</div>
+<div style={{fontSize:12,color:MUTED,marginBottom:16}}>{fmt(produtoModal.produto.precoVenda)} por unidade</div>
+<div style={{marginBottom:12}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>QUANTIDADE</label>
+<input type="number" min="1" value={produtoModalQuant} autoFocus
+onChange={e=>setProdutoModalQuant(parseFloat(e.target.value)||1)}
+onFocus={e=>e.target.select()}
+onKeyDown={e=>e.key==='Enter'&&confirmarProdutoModal()}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:18,boxSizing:'border-box',textAlign:'center',fontWeight:700}}/>
+</div>
+<div style={{marginBottom:16}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DESCONTO %</label>
+<input type="number" min="0" max="100" value={produtoModalDesc}
+onChange={e=>setProdutoModalDesc(parseFloat(e.target.value)||0)}
+onFocus={e=>e.target.select()}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:16,boxSizing:'border-box',textAlign:'center'}}/>
+</div>
+<div style={{background:ACCENT_LIGHT,borderRadius:8,padding:'10px 12px',textAlign:'center',marginBottom:16}}>
+<div style={{fontSize:11,color:MUTED,marginBottom:2}}>TOTAL</div>
+<div style={{fontWeight:800,fontSize:20,color:ACCENT}}>{fmt(produtoModal.produto.precoVenda*produtoModalQuant*(1-produtoModalDesc/100))}</div>
+</div>
+<div style={{display:'flex',gap:8}}>
+<button onClick={()=>setProdutoModal(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Cancelar</button>
+<button onClick={confirmarProdutoModal} style={{flex:2,background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>+ Adicionar</button>
 </div>
 </div>
 </div>}
