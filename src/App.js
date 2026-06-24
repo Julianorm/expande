@@ -132,9 +132,7 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <text x="56" y="27" fontFamily="Arial, sans-serif" fontSize="21" fontWeight="900" fill="white" stroke="#2563EB" strokeWidth="0.5">X</text>
 <text x="70" y="27" fontFamily="Arial, sans-serif" fontSize="21" fontWeight="300" fill="white">pande</text>
 </svg>
-<button onClick={()=>{loadClients();loadSales();loadOrders()}} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:8,padding:'4px 8px',fontSize:12,color:MUTED,cursor:'pointer'}}>🔄</button>
-<button onClick={()=>supabase.auth.signOut()} style={{background:'none',border:`1px solid #ffffff33`,borderRadius:8,padding:'4px 8px',fontSize:11,color:'#94a3b8',cursor:'pointer'}}>Sair</button>
-</div>
+<button onClick={()=>supabase.auth.signOut()} style={{background:'none',border:`1px solid #ffffff55`,borderRadius:8,padding:'8px 16px',fontSize:13,color:'#e2e8f0',cursor:'pointer',fontWeight:600,marginLeft:'auto'}}>Sair</button></div>
 </div>
 <div style={{position:'fixed',bottom:0,left:0,right:0,background:CARD,borderTop:`1px solid ${BORDER}`,display:'flex',justifyContent:'space-around',padding:'6px 0',zIndex:100}}>
 <Tab id="dashboard" label="Dashboard" icon="📊"/>
