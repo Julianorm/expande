@@ -39,7 +39,7 @@ export default function Login() {
         padding: '36px 32px', width: '100%', maxWidth: 380, boxShadow: '0 4px 24px #0001',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <svg viewBox="0 0 170 40" xmlns="http://www.w3.org/2000/svg" width="180" height="36" style={{margin:'0 auto 16px',display:'block',overflow:'visible'}}>
+          <svg viewBox="-5 0 210 40" xmlns="http://www.w3.org/2000/svg" width="180" height="36" style={{margin:'0 auto 16px',display:'block',overflow:'visible'}}>
             <circle cx="20" cy="20" r="18" fill="#1e293b"/>
             <circle cx="20" cy="20" r="15" fill="#2563EB"/>
             <polyline points="11,27 16,19 21,23 29,13" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
