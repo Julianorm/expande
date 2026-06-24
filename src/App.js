@@ -7,6 +7,8 @@ const fmt=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
 const today=()=>new Date().toISOString().split('T')[0]
 const timeNow=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
 const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
+const ADMIN_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/admin-api'
+const ADMIN_ID='7ad867ea-496c-412c-8acd-5cc7c21eca0e'
 const Badge=({color,children})=><span style={{background:color+'18',color,border:`1px solid ${color}33`,borderRadius:6,padding:'2px 8px',fontSize:11,fontWeight:600}}>{children}</span>
 const KpiCard=({label,value,sub,color=ACCENT})=><div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',flex:1,minWidth:130}}><div style={{fontSize:11,color:MUTED,fontWeight:600,marginBottom:4,textTransform:'uppercase'}}>{label}</div><div style={{fontSize:22,fontWeight:800,color}}>{value}</div>{sub&&<div style={{fontSize:11,color:MUTED,marginTop:2}}>{sub}</div>}</div>
 export default function App(){
@@ -43,6 +45,14 @@ const[pedidoLoading,setPedidoLoading]=useState(false)
 const[clientePerfil,setClientePerfil]=useState(null)
 const[perfilData,setPerfilData]=useState(null)
 const[perfilLoading,setPerfilLoading]=useState(false)
+const[configUsuarios,setConfigUsuarios]=useState([])
+const[configVendedores,setConfigVendedores]=useState([])
+const[novoEmail,setNovoEmail]=useState('')
+const[novaSenha,setNovaSenha]=useState('')
+const[novoNome,setNovoNome]=useState('')
+const[novoEgestorCode,setNovoEgestorCode]=useState('')
+const[configLoading,setConfigLoading]=useState(false)
+const[senhaUser,setSenhaUser]=useState({})
 const[produtoModal,setProdutoModal]=useState(null)
 const[produtoModalQuant,setProdutoModalQuant]=useState(1)
 const[produtoModalDesc,setProdutoModalDesc]=useState(0)
@@ -93,6 +103,68 @@ const addProduto=(produto,setProdutos,setSearch,setResultados)=>{
   setProdutoModalDesc(0)
   setSearch('')
   setResultados([])
+}
+const carregarConfig=async()=>{
+  setConfigLoading(true)
+  try{
+    const[usersRes,vendRes]=await Promise.all([
+      fetch(`${ADMIN_API}?action=listar_usuarios`),
+      fetch(`${EGESTOR_API}?action=perfil_cliente&codContato=0`)
+    ])
+    const users=await usersRes.json()
+    setConfigUsuarios(Array.isArray(users)?users:[])
+    const{data:vends}=await supabase.from('user_config').select('*')
+    const vendedoresEgestor=[
+      {codigo:1,nome:'Vicon Soluções Empresariais'},
+      {codigo:3,nome:'JULIANO RODRIGO MAGESKI'},
+      {codigo:4,nome:'LUCAS DE PAULO OLIVEIRA'},
+      {codigo:5,nome:'ELIESIMO ADRIANO PEREIRA'},
+      {codigo:7,nome:'OTAVIO DOS SANTOS RIBEIRO'}
+    ]
+    setConfigVendedores(vendedoresEgestor)
+  }catch(err){showToast('Erro ao carregar configurações','error')}
+  setConfigLoading(false)
+}
+
+const criarUsuario=async()=>{
+  if(!novoEmail||!novaSenha||!novoNome||!novoEgestorCode){showToast('Preencha todos os campos','error');return}
+  setConfigLoading(true)
+  try{
+    const res=await fetch(`${ADMIN_API}?action=criar_usuario`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:novoEmail,password:novaSenha,name:novoNome,egestor_code:parseInt(novoEgestorCode)})
+    })
+    const data=await res.json()
+    if(data.error){showToast('Erro: '+data.error,'error')}
+    else{showToast('Usuário criado!');setNovoEmail('');setNovaSenha('');setNovoNome('');setNovoEgestorCode('');await carregarConfig()}
+  }catch(err){showToast('Erro ao criar usuário','error')}
+  setConfigLoading(false)
+}
+
+const deletarUsuario=async(user_id)=>{
+  if(!window.confirm('Confirma exclusão do usuário?'))return
+  setConfigLoading(true)
+  try{
+    const res=await fetch(`${ADMIN_API}?action=deletar_usuario`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id})})
+    const data=await res.json()
+    if(data.error){showToast('Erro: '+data.error,'error')}
+    else{showToast('Usuário excluído!');await carregarConfig()}
+  }catch(err){showToast('Erro ao excluir','error')}
+  setConfigLoading(false)
+}
+
+const atualizarSenha=async(user_id)=>{
+  const nova=senhaUser[user_id]
+  if(!nova||nova.length<6){showToast('Senha deve ter ao menos 6 caracteres','error');return}
+  setConfigLoading(true)
+  try{
+    const res=await fetch(`${ADMIN_API}?action=atualizar_senha`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id,password:nova})})
+    const data=await res.json()
+    if(data.error){showToast('Erro: '+data.error,'error')}
+    else{showToast('Senha atualizada!');setSenhaUser(prev=>({...prev,[user_id]:''}))}
+  }catch(err){showToast('Erro ao atualizar senha','error')}
+  setConfigLoading(false)
 }
 const confirmarProdutoModal=()=>{
   if(!produtoModal)return
@@ -154,6 +226,7 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <Tab id="clientes" label="Clientes" icon="👥"/>
 <Tab id="vendas" label="Vendas" icon="💰"/>
 <Tab id="pedido" label="Pedido" icon="🛒" badge={orders.length}/>
+{user?.id===ADMIN_ID&&<Tab id="config" label="Config" icon="⚙️"/>}
 </div>
 <div style={{padding:'12px 16px'}}>
 {clientePerfil&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:500,display:'flex',alignItems:'flex-end'}}>
@@ -500,3 +573,46 @@ onRemove={()=>setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
 </div>
 </div>)
 }
+{activeTab==='config'&&user?.id===ADMIN_ID&&<div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>⚙️ Configurações</div>
+<button onClick={carregarConfig} disabled={configLoading} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:14,cursor:'pointer',marginBottom:12}}>
+{configLoading?'Carregando…':'🔄 Carregar Usuários'}
+</button>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8}}>➕ Novo Usuário</div>
+<input type="text" placeholder="Nome completo" value={novoNome} onChange={e=>setNovoNome(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
+<input type="email" placeholder="E-mail" value={novoEmail} onChange={e=>setNovoEmail(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
+<input type="password" placeholder="Senha" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
+<select value={novoEgestorCode} onChange={e=>setNovoEgestorCode(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">Selecionar vendedor eGestor…</option>
+{configVendedores.map(v=><option key={v.codigo} value={v.codigo}>{v.nome}</option>)}
+</select>
+<button onClick={criarUsuario} disabled={configLoading} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+✅ Criar Usuário
+</button>
+</div>
+{configUsuarios.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+<div style={{fontWeight:700,fontSize:13,marginBottom:12}}>👥 Usuários Cadastrados</div>
+{configUsuarios.map(u=><div key={u.id} style={{border:`1px solid ${BORDER}`,borderRadius:10,padding:'12px',marginBottom:8}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+<div>
+<div style={{fontWeight:600,fontSize:13}}>{u.config?.name||'Sem nome'}</div>
+<div style={{fontSize:11,color:MUTED}}>{u.email}</div>
+<div style={{fontSize:11,color:MUTED}}>Vendedor eGestor: {configVendedores.find(v=>v.codigo===u.config?.egestor_vendedor_code)?.nome||'Não vinculado'}</div>
+</div>
+{u.id!==ADMIN_ID&&<button onClick={()=>deletarUsuario(u.id)} style={{background:'#FEF2F2',border:`1px solid ${DANGER}33`,borderRadius:7,padding:'6px 10px',fontSize:11,fontWeight:600,color:DANGER,cursor:'pointer'}}>🗑️</button>}
+</div>
+{u.id!==ADMIN_ID&&<div style={{display:'flex',gap:8}}>
+<input type="password" placeholder="Nova senha…" value={senhaUser[u.id]||''} onChange={e=>setSenhaUser(prev=>({...prev,[u.id]:e.target.value}))} style={{flex:1,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 10px',fontSize:13,boxSizing:'border-box'}}/>
+<button onClick={()=>atualizarSenha(u.id)} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'8px 12px',fontWeight:600,fontSize:12,cursor:'pointer'}}>Alterar</button>
+</div>}
+</div>)}
+</div>}
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px'}}>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8}}>🔄 Sincronizar Produtos</div>
+<div style={{fontSize:12,color:MUTED,marginBottom:12}}>Atualiza todos os produtos do eGestor no CRM.</div>
+<button onClick={async()=>{setConfigLoading(true);try{await fetch('https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/sync-produtos');showToast('Produtos sincronizados!')}catch{showToast('Erro ao sincronizar','error')}setConfigLoading(false)}} disabled={configLoading} style={{width:'100%',background:WARNING,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+📦 Sincronizar Produtos
+</button>
+</div>
+</div>}
