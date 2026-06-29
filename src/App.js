@@ -230,7 +230,7 @@ const noLista=pedidoProdutos.find(x=>x.codigo===prod.codigo)
 return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,border:`1px solid ${noLista?ACCENT:BORDER}`,borderRadius:10,padding:'10px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
 <div style={{flex:1}}>
 <div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{prod.descricao}</div>
-<div style={{fontSize:11,color:MUTED}}>{fmt(prod.precoVenda)}</div>
+<div style={{fontSize:11,color:MUTED}}>{fmt(prod.precoVenda||0)}</div>
 </div>
 <div style={{display:'flex',alignItems:'center',gap:6}}>
 <button onMouseDown={()=>{if(noLista&&noLista.quant<=1){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant-1}:x))}}} style={{width:32,height:32,background:noLista?DANGER:'#eee',color:noLista?'#fff':MUTED,border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
