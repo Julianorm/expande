@@ -489,14 +489,7 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 {pedidoVencimento&&<div style={{fontSize:11,color:MUTED,marginTop:6,textAlign:'center'}}>Vencimento: {new Date(pedidoVencimento+'T12:00:00').toLocaleDateString('pt-BR')}</div>}
 </div>
 </>}
-<div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder="Buscar produto…" value={pedidoSearch} onChange={e=>{setPedidoSearch(e.target.value);buscarProdutos(e.target.value,setPedidoResultados)}} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
-{pedidoResultados.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:220,overflowY:'auto'}}>
-{pedidoResultados.map(p=><div key={p.codigo} onMouseDown={()=>addProduto(p,setPedidoProdutos,setPedidoSearch,setPedidoResultados)} style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-<div style={{fontWeight:600}}>{p.descricao}</div><div style={{fontSize:11,color:MUTED}}>Cód: {p.codigoProprio} • {fmt(p.precoVenda)}</div>
-</div>)}
-</div>}
-</div>
+<button onClick={abrirModalProdutos} style={{width:'100%',background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,color:ACCENT,cursor:'pointer',marginBottom:8}}>+ Adicionar Produto</button>
 {pedidoProdutos.map(p=><ProdutoCard key={p.codigo} p={p} onChange={np=>setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))} onRemove={()=>setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
 {pedidoProdutos.length>0&&<div style={{textAlign:'right',fontWeight:800,fontSize:18,color:ACCENT,margin:'8px 0 12px'}}>Total: {fmt(totalPedido)}</div>}
 <button onClick={salvarPedido} disabled={pedidoLoading} style={{width:'100%',background:pedidoLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:700,fontSize:15,cursor:pedidoLoading?'not-allowed':'pointer'}}>
