@@ -224,22 +224,20 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <input type="text" placeholder="🔍 Buscar produto…" value={modalProdutoSearch} onChange={e=>setModalProdutoSearch(e.target.value)}
 style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:12}}/>
 <div style={{overflowY:'auto',flex:1}}>
-{todosProdutos.filter(p=>p.descricao?.toLowerCase().includes(modalProdutoSearch.toLowerCase())||p.codigoProprio?.toLowerCase().includes(modalProdutoSearch.toLowerCase())).map(p=>{
-const noLista=pedidoProdutos.find(x=>x.codigo===p.codigo)
-return<div key={p.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,border:`1px solid ${noLista?ACCENT:BORDER}`,borderRadius:10,padding:'10px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+{todosProdutos.filter(p=>p.descricao?.toLowerCase().includes(modalProdutoSearch.toLowerCase())||p.codigo_proprio?.toLowerCase().includes(modalProdutoSearch.toLowerCase())).map(p=>{
+const prod={codigo:p.erp_code,descricao:p.descricao,codigoProprio:p.codigo_proprio,precoVenda:p.preco_venda}
+const noLista=pedidoProdutos.find(x=>x.codigo===prod.codigo)
+return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,border:`1px solid ${noLista?ACCENT:BORDER}`,borderRadius:10,padding:'10px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
 <div style={{flex:1}}>
-<div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{p.descricao}</div>
-<div style={{fontSize:11,color:MUTED}}>{fmt(p.precoVenda)}</div>
+<div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{prod.descricao}</div>
+<div style={{fontSize:11,color:MUTED}}>{fmt(prod.precoVenda)}</div>
 </div>
 <div style={{display:'flex',alignItems:'center',gap:6}}>
-<button onMouseDown={()=>{if(noLista&&noLista.quant<=1){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:x.quant-1}:x))}}} style={{width:32,height:32,background:noLista?DANGER:'#eee',color:noLista?'#fff':MUTED,border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-<input type="number" min="0" value={noLista?.quant||0} onChange={e=>{const q=parseFloat(e.target.value)||0;if(q===0){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:q}:x))}else{setPedidoProdutos(prev=>[...prev,{...p,quant:q,vDesc:0}])}}} onFocus={e=>e.target.select()} style={{width:44,textAlign:'center',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 4px',fontSize:14,fontWeight:700}}/>
-<button onMouseDown={()=>{if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:x.quant+1}:x))}else{setPedidoProdutos(prev=>[...prev,{...p,quant:1,vDesc:0}])}}} style={{width:32,height:32,background:ACCENT,color:'#fff',border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+<button onMouseDown={()=>{if(noLista&&noLista.quant<=1){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant-1}:x))}}} style={{width:32,height:32,background:noLista?DANGER:'#eee',color:noLista?'#fff':MUTED,border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+<input type="number" min="0" value={noLista?.quant||0} onChange={e=>{const q=parseFloat(e.target.value)||0;if(q===0){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:q}:x))}else{setPedidoProdutos(prev=>[...prev,{...prod,quant:q,vDesc:0}])}}} onFocus={e=>e.target.select()} style={{width:44,textAlign:'center',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 4px',fontSize:14,fontWeight:700}}/>
+<button onMouseDown={()=>{if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant+1}:x))}else{setPedidoProdutos(prev=>[...prev,{...prod,quant:1,vDesc:0}])}}} style={{width:32,height:32,background:ACCENT,color:'#fff',border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
 </div>
 </div>})}
-</div>
-</div>
-</div>}
 {produtoModal&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:600,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
 <div style={{background:CARD,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
 <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{produtoModal.produto.descricao}</div>
