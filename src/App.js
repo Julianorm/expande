@@ -238,6 +238,9 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <button onMouseDown={()=>{if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant+1}:x))}else{setPedidoProdutos(prev=>[...prev,{...prod,quant:1,vDesc:0}])}}} style={{width:32,height:32,background:ACCENT,color:'#fff',border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
 </div>
 </div>})}
+</div>
+</div>
+</div>}
 {produtoModal&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:600,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
 <div style={{background:CARD,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
 <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{produtoModal.produto.descricao}</div>
