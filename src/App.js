@@ -432,8 +432,15 @@ return<>
 <option value="1">Dinheiro</option><option value="2">Cheque</option><option value="8">Pix/Ted</option><option value="16">Boleto Sicoob</option><option value="17">Débito em Conta</option>
 </select>
 <div style={{marginBottom:8}}>
-<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DATA DE VENCIMENTO</label>
-<input type="date" value={pedidoVencimento} onChange={e=>setPedidoVencimento(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>PRAZO DE VENCIMENTO</label>
+<div style={{display:'flex',gap:8}}>
+{[7,14,21,28].map(dias=>{
+const dataVenc=new Date(Date.now()+dias*86400000).toISOString().split('T')[0]
+const selecionado=pedidoVencimento===dataVenc
+return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{flex:1,background:selecionado?ACCENT:SURFACE,color:selecionado?'#fff':MUTED,border:`1px solid ${selecionado?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontSize:13,fontWeight:700,cursor:'pointer'}}>{dias}d</button>
+})}
+</div>
+{pedidoVencimento&&<div style={{fontSize:11,color:MUTED,marginTop:6,textAlign:'center'}}>Vencimento: {new Date(pedidoVencimento+'T12:00:00').toLocaleDateString('pt-BR')}</div>}
 </div>
 </>}
 <div style={{position:'relative',marginBottom:8}}>
