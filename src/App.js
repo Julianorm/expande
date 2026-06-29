@@ -37,6 +37,9 @@ const[pasteText,setPasteText]=useState('')
 const[loading,setLoading]=useState(false)
 const[pedidoCliente,setPedidoCliente]=useState(null)
 const[pedidoClienteSearch,setPedidoClienteSearch]=useState('')
+const[modalProdutos,setModalProdutos]=useState(false)
+const[modalProdutoSearch,setModalProdutoSearch]=useState('')
+const[todosProdutos,setTodosProdutos]=useState([])
 const[pedidoProdutos,setPedidoProdutos]=useState([])
 const[pedidoSearch,setPedidoSearch]=useState('')
 const[pedidoResultados,setPedidoResultados]=useState([])
@@ -85,6 +88,17 @@ const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(p
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
 const moverCliente=async(clienteId,direcao,rota)=>{const rotaClients=clients.filter(c=>c.route===rota).sort((a,b)=>a.ordem-b.ordem);const idx=rotaClients.findIndex(c=>c.id===clienteId);if(direcao==='up'&&idx===0)return;if(direcao==='down'&&idx===rotaClients.length-1)return;const outro=direcao==='up'?rotaClients[idx-1]:rotaClients[idx+1];const atual=rotaClients[idx];await supabase.from('clients').update({ordem:outro.ordem}).eq('id',atual.id);await supabase.from('clients').update({ordem:atual.ordem}).eq('id',outro.id);await loadClients()}
+const abrirModalProdutos=async()=>{
+  setModalProdutos(true)
+  setModalProdutoSearch('')
+  if(todosProdutos.length===0){
+    try{
+      const res=await fetch(`${EGESTOR_API}?action=produtos&search=a`)
+      const data=await res.json()
+      setTodosProdutos(Array.isArray(data)?data:[])
+    }catch(err){showToast('Erro ao carregar produtos','error')}
+  }
+}
 const abrirPerfil=async(cliente)=>{setClientePerfil(cliente);setPerfilData(null);setPerfilLoading(true);try{const res=await fetch(`${EGESTOR_API}?action=perfil_cliente&codContato=${cliente.erp_code}`);const data=await res.json();setPerfilData(data)}catch(err){showToast('Erro ao buscar perfil','error')}setPerfilLoading(false)}
 const salvarPedido=async()=>{if(!pedidoCliente||pedidoProdutos.length===0){showToast('Preencha cliente e produtos.','error');return}if(['Pedido S/ NFe','Pedido C/ NFe'].includes(pedidoSituacao)&&!pedidoFormaPgto){showToast('Selecione a forma de pagamento.','error');return}setPedidoLoading(true);try{const total=pedidoProdutos.reduce((acc,p)=>{const sub=p.precoVenda*p.quant;const desc=sub*(p.vDesc||0)/100;return acc+sub-desc},0);const{error}=await supabase.from('orders').insert({user_id:user.id,client_id:pedidoCliente.id||null,client_name:pedidoCliente.name,client_erp_code:pedidoCliente.erp_code,route:pedidoCliente.route||'',situacao:pedidoSituacao,forma_pgto:pedidoFormaPgto?parseInt(pedidoFormaPgto):null,vencimento:pedidoVencimento,produtos:pedidoProdutos,total,date:today()});if(error){showToast('Erro ao salvar pedido','error')}else{showToast('Pedido salvo!');setPedidoCliente(null);setPedidoProdutos([]);setPedidoFormaPgto('1');setPedidoSituacao('Pedido S/ NFe');setPedidoVencimento(today());await loadOrders()}}catch(err){showToast('Erro ao salvar pedido','error')}setPedidoLoading(false)}
 const excluirPedido=async(id)=>{const{error}=await supabase.from('orders').delete().eq('id',id);if(error){showToast('Erro ao excluir pedido','error');return}setOrders(prev=>prev.filter(o=>o.id!==id));showToast('Pedido excluído')}
@@ -198,6 +212,31 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <div style={{display:'flex',gap:8,marginTop:16}}>
 <button onClick={()=>setClientePerfil(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Fechar</button>
 <button onClick={()=>{setPedidoCliente(clientePerfil);setClientePerfil(null);setActiveTab('pedido')}} style={{flex:2,background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🛒 Fazer Pedido</button>
+</div>
+</div>
+</div>}
+{modalProdutos&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:600,display:'flex',alignItems:'flex-end'}}>
+<div style={{background:CARD,borderRadius:'16px 16px 0 0',padding:20,width:'100%',height:'90vh',display:'flex',flexDirection:'column'}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+<div style={{fontWeight:800,fontSize:16}}>📦 Produtos</div>
+<button onClick={()=>setModalProdutos(false)} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontWeight:700,fontSize:14,cursor:'pointer'}}>Salvar</button>
+</div>
+<input type="text" placeholder="🔍 Buscar produto…" value={modalProdutoSearch} onChange={e=>setModalProdutoSearch(e.target.value)}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:12}}/>
+<div style={{overflowY:'auto',flex:1}}>
+{todosProdutos.filter(p=>p.descricao?.toLowerCase().includes(modalProdutoSearch.toLowerCase())||p.codigoProprio?.toLowerCase().includes(modalProdutoSearch.toLowerCase())).map(p=>{
+const noLista=pedidoProdutos.find(x=>x.codigo===p.codigo)
+return<div key={p.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,border:`1px solid ${noLista?ACCENT:BORDER}`,borderRadius:10,padding:'10px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{p.descricao}</div>
+<div style={{fontSize:11,color:MUTED}}>{fmt(p.precoVenda)}</div>
+</div>
+<div style={{display:'flex',alignItems:'center',gap:6}}>
+<button onMouseDown={()=>{if(noLista&&noLista.quant<=1){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:x.quant-1}:x))}}} style={{width:32,height:32,background:noLista?DANGER:'#eee',color:noLista?'#fff':MUTED,border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+<input type="number" min="0" value={noLista?.quant||0} onChange={e=>{const q=parseFloat(e.target.value)||0;if(q===0){setPedidoProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}else if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:q}:x))}else{setPedidoProdutos(prev=>[...prev,{...p,quant:q,vDesc:0}])}}} onFocus={e=>e.target.select()} style={{width:44,textAlign:'center',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 4px',fontSize:14,fontWeight:700}}/>
+<button onMouseDown={()=>{if(noLista){setPedidoProdutos(prev=>prev.map(x=>x.codigo===p.codigo?{...x,quant:x.quant+1}:x))}else{setPedidoProdutos(prev=>[...prev,{...p,quant:1,vDesc:0}])}}} style={{width:32,height:32,background:ACCENT,color:'#fff',border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+</div>
+</div>})}
 </div>
 </div>
 </div>}
@@ -399,14 +438,9 @@ return<>
 <select value={editOrderFormaPgto} onChange={e=>setEditOrderFormaPgto(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="1">Dinheiro</option><option value="2">Cheque</option><option value="8">Pix/Ted</option><option value="16">Boleto Sicoob</option><option value="17">Débito em Conta</option>
 </select>
-<div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder="Buscar produto…" value={editOrderSearch} onChange={e=>{setEditOrderSearch(e.target.value);buscarProdutos(e.target.value,setEditOrderResultados)}} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
-{editOrderResultados.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:180,overflowY:'auto'}}>
-{editOrderResultados.map(p=><div key={p.codigo} onMouseDown={()=>addProduto(p,setEditOrderProdutos,setEditOrderSearch,setEditOrderResultados)} style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-<div style={{fontWeight:600}}>{p.descricao}</div><div style={{fontSize:11,color:MUTED}}>{fmt(p.precoVenda)}</div>
-</div>)}
-</div>}
-</div>
+<button onClick={abrirModalProdutos} style={{width:'100%',background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,color:ACCENT,cursor:'pointer',marginBottom:8}}>
++ Adicionar Produto
+</button>
 {editOrderProdutos.map(p=><ProdutoCard key={p.codigo} p={p} onChange={np=>setEditOrderProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))} onRemove={()=>setEditOrderProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
 <div style={{textAlign:'right',fontWeight:800,fontSize:16,color:ACCENT,margin:'8px 0 12px'}}>Total: {fmt(editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0))}</div>
 <div style={{display:'flex',gap:8}}>
