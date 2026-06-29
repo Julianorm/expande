@@ -93,9 +93,8 @@ const abrirModalProdutos=async()=>{
   setModalProdutoSearch('')
   if(todosProdutos.length===0){
     try{
-      const res=await fetch(`${EGESTOR_API}?action=produtos&search=a`)
-      const data=await res.json()
-      setTodosProdutos(Array.isArray(data)?data:[])
+      const{data}=await supabase.from('products').select('*').gt('preco_venda',0).order('descricao')
+      setTodosProdutos(data||[])
     }catch(err){showToast('Erro ao carregar produtos','error')}
   }
 }
