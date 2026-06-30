@@ -360,7 +360,7 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 {activeTab==='vendas'&&<div>
 {(()=>{
 const totalExportado=sales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0)
-const totalPendente=orders.reduce((a,o)=>a+o.total,0)
+const totalPendente=orders.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0)
 const totalGeral=totalExportado+totalPendente
 const progresso=dailyGoal>0?Math.min((totalGeral/dailyGoal)*100,100):0
 return<>
