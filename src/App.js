@@ -118,8 +118,7 @@ const soldClientIds=useMemo(()=>new Set(routeSales.map(s=>s.client_id).filter(Bo
 const inactiveSoldClients=useMemo(()=>routeSales.filter(s=>clients.find(c=>c.id===s.client_id)?.inactive),[routeSales,clients])
 const activeRouteClients=useMemo(()=>routeClients.filter(c=>!c.inactive),[routeClients])
 const activeSoldIds=useMemo(()=>new Set(routeSales.filter(s=>{const c=clients.find(cl=>cl.id===s.client_id);return!c||!c.inactive}).map(s=>s.client_id).filter(Boolean)),[routeSales,clients])
-const totalSold=useMemo(()=>routeSales.reduce((a,s)=>a+s.value,0),[routeSales])
-const remaining=activeRouteClients.length-activeSoldIds.size
+const totalSold=useMemo(()=>routeSales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0),[routeSales])const remaining=activeRouteClients.length-activeSoldIds.size
 const avgTicket=activeSoldIds.size>0?totalSold/activeSoldIds.size:0
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
