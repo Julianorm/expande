@@ -90,89 +90,15 @@ const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabS
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
 const moverCliente=async(clienteId,direcao,rota)=>{const rotaClients=clients.filter(c=>c.route===rota).sort((a,b)=>a.ordem-b.ordem);const idx=rotaClients.findIndex(c=>c.id===clienteId);if(direcao==='up'&&idx===0)return;if(direcao==='down'&&idx===rotaClients.length-1)return;const outro=direcao==='up'?rotaClients[idx-1]:rotaClients[idx+1];const atual=rotaClients[idx];await supabase.from('clients').update({ordem:outro.ordem}).eq('id',atual.id);await supabase.from('clients').update({ordem:atual.ordem}).eq('id',outro.id);await loadClients()}
 const gerarPdf=async(order)=>{
-  const doc=new jsPDF()
+  const toBase64=url=>fetch(url).then(r=>r.blob()).then(b=>new Promise((res,rej)=>{const reader=new FileReader();reader.onload=()=>res(reader.result);reader.onerror=rej;reader.readAsDataURL(b)}))
+  let logoBase64=''
+  try{logoBase64=await toBase64('/logo_alimentos_4.png')}catch(e){}
   const nomeArquivo=`Pedido_${order.client_name.replace(/[^a-zA-Z0-9]/g,'_')}_${order.date}.pdf`
-  try{
-    const toBase64=url=>fetch(url).then(r=>r.blob()).then(b=>new Promise((res,rej)=>{const reader=new FileReader();reader.onload=()=>res(reader.result);reader.onerror=rej;reader.readAsDataURL(b)}))
-    const logoBase64=await toBase64('/logo_alimentos_4.png')
-    doc.addImage(logoBase64,'PNG',10,10,60,20)
-  }catch(e){}
-  doc.setFontSize(9)
-  doc.setTextColor(100)
-  doc.text('CNPJ: 18.520.142/0001-45',200,12,{align:'right'})
-  doc.text('Rua Anália Vieira de Souza, nº 38',200,17,{align:'right'})
-  doc.text('Bairro São Vicente - Afonso Cláudio ES',200,22,{align:'right'})
-  doc.text('Tel: 27 99852-2632',200,27,{align:'right'})
-  doc.setDrawColor(217,119,6)
-  doc.setLineWidth(0.5)
-  doc.line(10,35,200,35)
-  doc.setFontSize(16)
-  doc.setTextColor(30,41,59)
-  doc.setFont('helvetica','bold')
-  doc.text('Pedido de Venda',10,44)
-  doc.setFontSize(8)
-  doc.setTextColor(100)
-  doc.setFont('helvetica','bold')
-  doc.text('CLIENTE',10,54)
-  doc.text('DATA',105,54)
-  doc.setFont('helvetica','normal')
-  doc.setTextColor(30,41,59)
-  doc.text(order.client_name,10,59)
-  doc.text(new Date(order.date+'T12:00:00').toLocaleDateString('pt-BR'),105,59)
-  doc.setFont('helvetica','bold')
-  doc.setTextColor(100)
-  doc.text('SITUAÇÃO',10,66)
-  doc.text('FORMA DE PAGAMENTO',105,66)
-  doc.setFont('helvetica','normal')
-  doc.setTextColor(30,41,59)
-  doc.text(order.situacao,10,71)
-  doc.text({1:'Dinheiro',2:'Cheque',8:'Pix/Ted',16:'Boleto Sicoob',17:'Débito em Conta'}[order.forma_pgto]||'-',105,71)
-  doc.setFont('helvetica','bold')
-  doc.setTextColor(100)
-  doc.text('VENCIMENTO',10,78)
-  doc.text('ROTA',105,78)
-  doc.setFont('helvetica','normal')
-  doc.setTextColor(30,41,59)
-  doc.text(order.vencimento?new Date(order.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'-',10,83)
-  doc.text(order.route||'-',105,83)
-  doc.setFillColor(30,41,59)
-  doc.rect(10,90,190,8,'F')
-  doc.setTextColor(255,255,255)
-  doc.setFontSize(9)
-  doc.setFont('helvetica','bold')
-  doc.text('Produto',12,95.5)
-  doc.text('Qtd',130,95.5)
-  doc.text('Preço',148,95.5)
-  doc.text('Desc%',168,95.5)
-  doc.text('Total',185,95.5)
-  let y=104
-  doc.setFont('helvetica','normal')
-  doc.setFontSize(9)
-  order.produtos.forEach((p,i)=>{
-    if(i%2===0)doc.setFillColor(248,250,252)
-    else doc.setFillColor(255,255,255)
-    doc.rect(10,y-5,190,8,'F')
-    doc.setTextColor(30,41,59)
-    doc.text(p.descricao.substring(0,45),12,y)
-    doc.text(String(p.quant),130,y)
-    doc.text(p.precoVenda.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),148,y)
-    doc.text(`${p.vDesc||0}%`,168,y)
-    doc.text((p.precoVenda*p.quant*(1-(p.vDesc||0)/100)).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),185,y)
-    y+=8
-  })
-  doc.setDrawColor(226,232,240)
-  doc.line(10,y,200,y)
-  y+=8
-  doc.setFont('helvetica','bold')
-  doc.setFontSize(12)
-  doc.setTextColor(37,99,235)
-  doc.text(`Total: ${order.total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}`,200,y,{align:'right'})
-  doc.setFontSize(8)
-  doc.setTextColor(148,163,184)
-  doc.setFont('helvetica','normal')
-  doc.text('Mageski Alimentos — 18.520.142/0001-45 — Rua Anália Vieira de Souza, nº 38, Bairro São Vicente, Afonso Cláudio ES — Tel: 27 99852-2632',105,285,{align:'center'})
-  doc.save(nomeArquivo)
-}const abrirModalProdutos=async()=>{
+  const conteudo=`<html><head><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#1e293b}.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-bottom:2px solid #d97706;padding-bottom:12px}.logo{height:60px}.empresa{text-align:right;font-size:11px;color:#64748b;line-height:1.6}.titulo{font-size:18px;font-weight:bold;margin:16px 0 4px}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;background:#f8fafc;padding:12px;border-radius:8px}.info-item{font-size:12px}.info-label{font-weight:bold;color:#64748b;font-size:10px;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1e293b;color:#fff;padding:8px 10px;font-size:11px;text-align:left}td{padding:8px 10px;font-size:12px;border-bottom:1px solid #e2e8f0}tr:nth-child(even){background:#f8fafc}.total{text-align:right;font-size:16px;font-weight:bold;color:#2563eb;margin-top:8px}.footer{margin-top:24px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:10px;color:#94a3b8;text-align:center}</style></head><body><div class="header"><img src="${logoBase64}" class="logo"/><div class="empresa">CNPJ: 18.520.142/0001-45<br/>Rua Anália Vieira de Souza, nº 38<br/>Bairro São Vicente - Afonso Cláudio ES<br/>Tel: 27 99852-2632</div></div><div class="titulo">Pedido de Venda</div><div class="info-grid"><div class="info-item"><div class="info-label">Cliente</div>${order.client_name}</div><div class="info-item"><div class="info-label">Data</div>${new Date(order.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div class="info-item"><div class="info-label">Situação</div>${order.situacao}</div><div class="info-item"><div class="info-label">Forma de Pagamento</div>${{1:'Dinheiro',2:'Cheque',8:'Pix/Ted',16:'Boleto Sicoob',17:'Débito em Conta'}[order.forma_pgto]||'-'}</div><div class="info-item"><div class="info-label">Vencimento</div>${order.vencimento?new Date(order.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'-'}</div><div class="info-item"><div class="info-label">Rota</div>${order.route||'-'}</div></div><table><thead><tr><th>Produto</th><th>Qtd</th><th>Preço</th><th>Desc%</th><th>Total</th></tr></thead><tbody>${order.produtos.map(p=>`<tr><td>${p.descricao}</td><td>${p.quant}</td><td>${p.precoVenda.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td><td>${p.vDesc||0}%</td><td>${(p.precoVenda*p.quant*(1-(p.vDesc||0)/100)).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td></tr>`).join('')}</tbody></table><div class="total">Total: ${order.total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div><div class="footer">Mageski Alimentos — 18.520.142/0001-45 — Rua Anália Vieira de Souza, nº 38, Bairro São Vicente, Afonso Cláudio ES — Tel: 27 99852-2632</div></body></html>`
+  const janela=window.open('','_blank')
+  if(janela){janela.document.title=nomeArquivo;janela.document.write(conteudo);janela.document.close();janela.focus();setTimeout(()=>janela.print(),800)}
+}
+ const abrirModalProdutos=async()=>{
   setModalProdutos(true)
   setModalProdutoSearch('')
   if(todosProdutos.length===0){
