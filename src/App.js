@@ -509,8 +509,9 @@ return<>
 {editOrderProdutos.map(p=><ProdutoCard key={p.codigo} p={p} onChange={np=>setEditOrderProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))} onRemove={()=>setEditOrderProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
 <div style={{textAlign:'right',fontWeight:800,fontSize:16,color:ACCENT,margin:'8px 0 12px'}}>Total: {fmt(editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0))}</div>
 <div style={{display:'flex',gap:8}}>
-<button onClick={()=>setEditandoOrder(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Cancelar</button>
-<button onClick={salvarEdicaoOrder} style={{flex:2,background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>💾 Salvar</button>
+<button onClick={()=>abrirEdicaoOrder(o)} style={{flex:1,background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:600,color:TEXT,cursor:'pointer'}}>✏️ Editar</button>
+<button onClick={()=>gerarPdf(o)} style={{flex:1,background:'#EFF6FF',border:`1px solid ${ACCENT}33`,borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:600,color:ACCENT,cursor:'pointer'}}>📄 PDF</button>
+<button onClick={()=>excluirPedido(o.id)} style={{flex:1,background:'#FEF2F2',border:`1px solid ${DANGER}33`,borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:600,color:DANGER,cursor:'pointer'}}>🗑️ Excluir</button>
 </div>
 </div>
 </div>}
