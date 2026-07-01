@@ -1,6 +1,5 @@
 import{useState,useCallback,useMemo,useEffect}from 'react'
 import*as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
 import{supabase}from './lib/supabase'
 import{useAuth}from './lib/useAuth'
 const ACCENT='#2563EB',ACCENT_LIGHT='#EFF6FF',SUCCESS='#16A34A',WARNING='#D97706',DANGER='#DC2626',SURFACE='#F8FAFC',CARD='#FFFFFF',BORDER='#E2E8F0',TEXT='#0F172A',MUTED='#64748B'
