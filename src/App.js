@@ -93,8 +93,23 @@ const moverCliente=async(clienteId,direcao,rota)=>{const rotaClients=clients.fil
 const gerarPdf=async(order)=>{
   const nomeArquivo=`Pedido_${order.client_name.replace(/[^a-zA-Z0-9]/g,'_')}_${order.date}.pdf`
   const conteudo=`<html><head><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#1e293b}.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-bottom:2px solid #d97706;padding-bottom:12px}.logo{height:60px}.empresa{text-align:right;font-size:11px;color:#64748b;line-height:1.6}.titulo{font-size:18px;font-weight:bold;margin:16px 0 4px}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;background:#f8fafc;padding:12px;border-radius:8px}.info-item{font-size:12px}.info-label{font-weight:bold;color:#64748b;font-size:10px;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1e293b;color:#fff;padding:8px 10px;font-size:11px;text-align:left}td{padding:8px 10px;font-size:12px;border-bottom:1px solid #e2e8f0}tr:nth-child(even){background:#f8fafc}.total{text-align:right;font-size:16px;font-weight:bold;color:#2563eb;margin-top:8px}.footer{margin-top:24px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:10px;color:#94a3b8;text-align:center}</style></head><body><div class="header"><img src="${logoBase64}" class="logo"/><div class="empresa">CNPJ: 18.520.142/0001-45<br/>Rua Anália Vieira de Souza, nº 38<br/>Bairro São Vicente - Afonso Cláudio ES<br/>Tel: 27 99852-2632</div></div><div class="titulo">Pedido de Venda</div><div class="info-grid"><div class="info-item"><div class="info-label">Cliente</div>${order.client_name}</div><div class="info-item"><div class="info-label">Data</div>${new Date(order.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div class="info-item"><div class="info-label">Situação</div>${order.situacao}</div><div class="info-item"><div class="info-label">Forma de Pagamento</div>${{1:'Dinheiro',2:'Cheque',8:'Pix/Ted',16:'Boleto Sicoob',17:'Débito em Conta'}[order.forma_pgto]||'-'}</div><div class="info-item"><div class="info-label">Vencimento</div>${order.vencimento?new Date(order.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'-'}</div><div class="info-item"><div class="info-label">Rota</div>${order.route||'-'}</div></div><table><thead><tr><th>Produto</th><th>Qtd</th><th>Preço</th><th>Desc%</th><th>Total</th></tr></thead><tbody>${order.produtos.map(p=>`<tr><td>${p.descricao}</td><td>${p.quant}</td><td>${p.precoVenda.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td><td>${p.vDesc||0}%</td><td>${(p.precoVenda*p.quant*(1-(p.vDesc||0)/100)).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td></tr>`).join('')}</tbody></table><div class="total">Total: ${order.total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div><div class="footer">Mageski Alimentos — 18.520.142/0001-45 — Rua Anália Vieira de Souza, nº 38, Bairro São Vicente, Afonso Cláudio ES — Tel: 27 99852-2632</div></body></html>`
-  const janela=window.open('','_blank')
-  if(janela){janela.document.title=nomeArquivo;janela.document.write(conteudo);janela.document.close();janela.focus();setTimeout(()=>janela.print(),800)}
+  const blob=new Blob([conteudo],{type:'text/html'})
+  const blobUrl=URL.createObjectURL(blob)
+  if(navigator.share){
+    try{
+      const res=await fetch(blobUrl)
+      const htmlBlob=await res.blob()
+      const file=new File([htmlBlob],nomeArquivo.replace('.pdf','.html'),{type:'text/html'})
+      await navigator.share({title:'Pedido de Venda',text:`Pedido - ${order.client_name}`,files:[file]})
+    }catch(err){
+      const janela=window.open(blobUrl,'_blank')
+      if(janela){setTimeout(()=>janela.print(),800)}
+    }
+  }else{
+    const janela=window.open('','_blank')
+    if(janela){janela.document.title=nomeArquivo;janela.document.write(conteudo);janela.document.close();janela.focus();setTimeout(()=>janela.print(),800)}
+  }
+  URL.revokeObjectURL(blobUrl)
 }
  const abrirModalProdutos=async()=>{
   setModalProdutos(true)
