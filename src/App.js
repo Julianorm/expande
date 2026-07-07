@@ -28,6 +28,8 @@ const[activeTab,setActiveTab]=useState('dashboard')
 const[toast,setToast]=useState(null)
 const[dragOver,setDragOver]=useState(false)
 const[clientSearch,setClientSearch]=useState('')
+const[ordemEdit,setOrdemEdit]=useState({})
+const[ordemSaving,setOrdemSaving]=useState(false)
 const[tabSaleClient,setTabSaleClient]=useState(null)
 const[tabSaleClientInput,setTabSaleClientInput]=useState('')
 const[tabSaleValue,setTabSaleValue]=useState('')
@@ -90,6 +92,30 @@ const handleSetGoal=async()=>{if(!user?.id)return;const v=parseFloat(goalInput);
 const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(parseFloat(saleValue))){showToast('Selecione um cliente e informe o valor.','error');return}const client=clients.find(c=>c.id===selectedClient);const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:client.id,client_name:client.name,route:client.route,value:parseFloat(saleValue),note:saleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setSelectedClient('');setSaleValue('');setSaleNote('');showToast(`Venda de ${fmt(parseFloat(saleValue))} registrada!`)}
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
+const salvarOrdem=async(rota)=>{
+  setOrdemSaving(true)
+  const rotaClients=clients.filter(c=>c.route===rota)
+  const numeros=Object.entries(ordemEdit).filter(([id])=>rotaClients.find(c=>c.id===id)).map(([id,num])=>({id,num:parseInt(num)}))
+  
+  // Verificar duplicatas
+  const nums=numeros.map(n=>n.num)
+  const duplicatas=nums.filter((n,i)=>nums.indexOf(n)!==i)
+  if(duplicatas.length>0){
+    showToast(`Número ${duplicatas[0]} duplicado! Corrija antes de salvar.`,'error')
+    setOrdemSaving(false)
+    return
+  }
+  
+  // Salvar cada alteração
+  for(const{id,num}of numeros){
+    await supabase.from('clients').update({ordem:num}).eq('id',id)
+  }
+  
+  await loadClients()
+  setOrdemEdit({})
+  showToast('Ordem salva!')
+  setOrdemSaving(false)
+}
 const moverCliente=async(clienteId,direcao,rota)=>{const rotaClients=clients.filter(c=>c.route===rota).sort((a,b)=>a.ordem-b.ordem);const idx=rotaClients.findIndex(c=>c.id===clienteId);if(direcao==='up'&&idx===0)return;if(direcao==='down'&&idx===rotaClients.length-1)return;const outro=direcao==='up'?rotaClients[idx-1]:rotaClients[idx+1];const atual=rotaClients[idx];await supabase.from('clients').update({ordem:outro.ordem}).eq('id',atual.id);await supabase.from('clients').update({ordem:atual.ordem}).eq('id',outro.id);await loadClients()}
 const gerarPdf=async(order)=>{
   const nomeArquivo=`Pedido_${order.client_name.replace(/[^a-zA-Z0-9]/g,'_')}_${order.date}.pdf`
@@ -401,11 +427,11 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 <input type="text" placeholder="🔍 Buscar cliente…" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} style={{flex:1,border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14}}/>
 <Badge color={ACCENT}>{filteredClients.length}</Badge>
 </div>
+{selectedRoute&&Object.keys(ordemEdit).length>0&&<button onClick={()=>salvarOrdem(selectedRoute)} disabled={ordemSaving} style={{width:'100%',background:ordemSaving?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:8}}>
+{ordemSaving?'Salvando…':'💾 Salvar Ordem'}
+</button>}
 {filteredClients.map((c,i)=><div key={c.id} style={{background:c.inactive?'#FFF7ED':CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'10px 14px',marginBottom:6,display:'flex',alignItems:'center',gap:8}}>
-<div style={{display:'flex',flexDirection:'column',gap:2,marginRight:4}}>
-<button onClick={()=>moverCliente(c.id,'up',c.route)} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:4,padding:'2px 6px',fontSize:10,cursor:'pointer',color:MUTED,lineHeight:1}}>▲</button>
-<button onClick={()=>moverCliente(c.id,'down',c.route)} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:4,padding:'2px 6px',fontSize:10,cursor:'pointer',color:MUTED,lineHeight:1}}>▼</button>
-</div>
+<input type="number" min="1" value={ordemEdit[c.id]!==undefined?ordemEdit[c.id]:c.ordem||''} onChange={e=>setOrdemEdit(prev=>({...prev,[c.id]:e.target.value}))} onFocus={e=>e.target.select()} style={{width:44,border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 4px',fontSize:13,fontWeight:700,textAlign:'center'}}/>
 <div style={{flex:1,cursor:'pointer'}} onClick={()=>abrirPerfil(c)}>
 <div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
 <div style={{fontSize:11,color:MUTED,marginTop:2}}><Badge color={ACCENT}>{c.route}</Badge></div>
