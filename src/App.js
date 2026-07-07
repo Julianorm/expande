@@ -385,7 +385,29 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 </div>
 {activeTab==='dashboard'&&<div>
 {!selectedRoute?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>🗺️</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Selecione uma rota para começar</div></div>
-:<>
+:(!dailyGoal||!dtEntrega)?<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'24px 16px',marginBottom:12}}>
+<div style={{textAlign:'center',marginBottom:20}}>
+<div style={{fontSize:36,marginBottom:8}}>🌅</div>
+<div style={{fontWeight:800,fontSize:16,color:TEXT}}>Configurar o dia</div>
+<div style={{fontSize:13,color:MUTED,marginTop:4}}>Rota: <strong>{selectedRoute}</strong></div>
+</div>
+<div style={{marginBottom:12}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>META DO DIA (R$)</label>
+<input type="number" placeholder="0,00" value={goalInput} onChange={e=>setGoalInput(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:16,boxSizing:'border-box',textAlign:'center'}}/>
+</div>
+<div style={{marginBottom:20}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DATA DE ENTREGA</label>
+<input type="date" value={dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0]} onChange={e=>setDtEntregaInput(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:16,boxSizing:'border-box',textAlign:'center'}}/>
+</div>
+<button onClick={async()=>{
+  if(!goalInput||isNaN(parseFloat(goalInput))){showToast('Informe a meta do dia.','error');return}
+  const dt=dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0]
+  await handleSetGoal()
+  handleSetDtEntrega(dt)
+}} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:800,fontSize:15,cursor:'pointer'}}>
+🚀 Começar o Dia
+</button>
+</div>:<>
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
 <KpiCard label="Na Rota" value={activeRouteClients.length} sub="clientes ativos" color={ACCENT}/>
 <KpiCard label="Atendidos" value={activeSoldIds.size} sub={`${activeRouteClients.length>0?Math.round((activeSoldIds.size/activeRouteClients.length)*100):0}%`} color={SUCCESS}/>
