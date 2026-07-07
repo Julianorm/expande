@@ -610,7 +610,6 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>
 </div>}
 </div>
-</div>
 </div>)
 }
 
