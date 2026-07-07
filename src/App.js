@@ -181,6 +181,8 @@ const activeSoldIds=useMemo(()=>new Set(routeSales.filter(s=>{const c=clients.fi
 const totalSold=useMemo(()=>routeSales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0),[routeSales])
 const remaining=activeRouteClients.length-activeSoldIds.size
 const avgTicket=activeSoldIds.size>0?totalSold/activeSoldIds.size:0
+const ticketMeta=dailyGoal&&activeRouteClients.length>0?dailyGoal/activeRouteClients.length:0
+const ticketColor=ticketMeta===0?ACCENT:avgTicket>=ticketMeta?SUCCESS:avgTicket>=ticketMeta*0.8?WARNING:DANGER
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
 const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch])
@@ -370,7 +372,7 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <KpiCard label="Na Rota" value={activeRouteClients.length} sub="clientes ativos" color={ACCENT}/>
 <KpiCard label="Atendidos" value={activeSoldIds.size} sub={`${activeRouteClients.length>0?Math.round((activeSoldIds.size/activeRouteClients.length)*100):0}%`} color={SUCCESS}/>
 <KpiCard label="Restantes" value={remaining} sub={remaining===0?'Concluído! 🎉':'a visitar'} color={remaining===0?SUCCESS:WARNING}/>
-<KpiCard label="Ticket Médio" value={fmt(avgTicket)} sub={`${activeSoldIds.size} venda(s)`} color={ACCENT}/>
+<KpiCard label="Ticket Médio" value={fmt(avgTicket)} sub={ticketMeta>0?`Meta: ${fmt(ticketMeta)}`:`${activeSoldIds.size} venda(s)`} color={ticketColor}/>
 </div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
