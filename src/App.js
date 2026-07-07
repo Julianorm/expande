@@ -407,8 +407,7 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 }} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:800,fontSize:15,cursor:'pointer'}}>
 🚀 Começar o Dia
 </button>
-</div></>:<>
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+</div></>:<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
 <KpiCard label="Na Rota" value={activeRouteClients.length} sub="clientes ativos" color={ACCENT}/>
 <KpiCard label="Atendidos" value={activeSoldIds.size} sub={`${activeRouteClients.length>0?Math.round((activeSoldIds.size/activeRouteClients.length)*100):0}%`} color={SUCCESS}/>
 <KpiCard label="Restantes" value={remaining} sub={remaining===0?'Concluído! 🎉':'a visitar'} color={remaining===0?SUCCESS:WARNING}/>
@@ -461,7 +460,6 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 <button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
 </div>)}
 </div>}
-</>}
 </div>}
 {activeTab==='clientes'&&<div>
 {clients.length===0?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>📂</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Nenhuma planilha importada</div></div>
