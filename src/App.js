@@ -40,6 +40,7 @@ const[pedidoCliente,setPedidoCliente]=useState(null)
 const[pedidoClienteSearch,setPedidoClienteSearch]=useState('')
 const[pedidoPdf,setPedidoPdf]=useState(null)
 const[modalProdutos,setModalProdutos]=useState(false)
+const[modalProdutosEdicao,setModalProdutosEdicao]=useState(false)
 const[modalProdutoSearch,setModalProdutoSearch]=useState('')
 const[todosProdutos,setTodosProdutos]=useState([])
 const[pedidoProdutos,setPedidoProdutos]=useState([])
@@ -110,6 +111,16 @@ const gerarPdf=async(order)=>{
     if(janela){janela.document.title=nomeArquivo;janela.document.write(conteudo);janela.document.close();janela.focus();setTimeout(()=>janela.print(),800)}
   }
   URL.revokeObjectURL(blobUrl)
+}
+const abrirModalProdutosEdicao=async()=>{
+  setModalProdutosEdicao(true)
+  setModalProdutoSearch('')
+  if(todosProdutos.length===0){
+    try{
+      const{data}=await supabase.from('products').select('*').gt('preco_venda',0).or('tags.cs.{"PROPRIO"},tags.cs.{"TERCEIROS"}').order('descricao')
+      setTodosProdutos(data||[])
+    }catch(err){showToast('Erro ao carregar produtos','error')}
+  }
 }
  const abrirModalProdutos=async()=>{
   setModalProdutos(true)
@@ -234,6 +245,32 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <div style={{display:'flex',gap:8,marginTop:16}}>
 <button onClick={()=>setClientePerfil(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Fechar</button>
 <button onClick={()=>{setPedidoCliente(clientePerfil);setClientePerfil(null);setActiveTab('pedido')}} style={{flex:2,background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🛒 Fazer Pedido</button>
+</div>
+</div>
+</div>}
+{modalProdutosEdicao&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:600,display:'flex',alignItems:'flex-end'}}>
+<div style={{background:CARD,borderRadius:'16px 16px 0 0',padding:20,width:'100%',height:'90vh',display:'flex',flexDirection:'column'}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+<div style={{fontWeight:800,fontSize:16}}>📦 Produtos</div>
+<button onClick={()=>setModalProdutosEdicao(false)} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontWeight:700,fontSize:14,cursor:'pointer'}}>Salvar</button>
+</div>
+<input type="text" placeholder="🔍 Buscar produto…" value={modalProdutoSearch} onChange={e=>setModalProdutoSearch(e.target.value)}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:12}}/>
+<div style={{overflowY:'auto',flex:1}}>
+{todosProdutos.filter(p=>p.descricao?.toLowerCase().includes(modalProdutoSearch.toLowerCase())||p.codigo_proprio?.toLowerCase().includes(modalProdutoSearch.toLowerCase())).map(p=>{
+const prod={codigo:p.erp_code,descricao:p.descricao,codigoProprio:p.codigo_proprio,precoVenda:p.preco_venda}
+const noLista=editOrderProdutos.find(x=>x.codigo===prod.codigo)
+return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,border:`1px solid ${noLista?ACCENT:BORDER}`,borderRadius:10,padding:'10px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{prod.descricao}</div>
+<div style={{fontSize:11,color:MUTED}}>{fmt(prod.precoVenda||0)}</div>
+</div>
+<div style={{display:'flex',alignItems:'center',gap:6}}>
+<button onMouseDown={()=>{if(noLista&&noLista.quant<=1){setEditOrderProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setEditOrderProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant-1}:x))}}} style={{width:32,height:32,background:noLista?DANGER:'#eee',color:noLista?'#fff':MUTED,border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+<input type="number" min="0" value={noLista?.quant||0} onChange={e=>{const q=parseFloat(e.target.value)||0;if(q===0){setEditOrderProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setEditOrderProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:q}:x))}else{setEditOrderProdutos(prev=>[...prev,{...prod,quant:q,vDesc:0}])}}} onFocus={e=>e.target.select()} style={{width:44,textAlign:'center',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 4px',fontSize:14,fontWeight:700}}/>
+<button onMouseDown={()=>{if(noLista){setEditOrderProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant+1}:x))}else{setEditOrderProdutos(prev=>[...prev,{...prod,quant:1,vDesc:0}])}}} style={{width:32,height:32,background:ACCENT,color:'#fff',border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+</div>
+</div>})}
 </div>
 </div>
 </div>}
@@ -461,7 +498,7 @@ return<>
 <select value={editOrderFormaPgto} onChange={e=>setEditOrderFormaPgto(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="1">Dinheiro</option><option value="2">Cheque</option><option value="8">Pix/Ted</option><option value="16">Boleto Sicoob</option><option value="17">Débito em Conta</option>
 </select>
-<button onClick={abrirModalProdutos} style={{width:'100%',background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,color:ACCENT,cursor:'pointer',marginBottom:8}}>
+<button onClick={abrirModalProdutosEdicao} style={{width:'100%',background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,color:ACCENT,cursor:'pointer',marginBottom:8}}>
 + Adicionar Produto
 </button>
 {editOrderProdutos.map(p=><ProdutoCard key={p.codigo} p={p} onChange={np=>setEditOrderProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))} onRemove={()=>setEditOrderProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
