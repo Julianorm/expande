@@ -367,18 +367,101 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
 </div>}
-{selectedRoute&&<div style={{flex:'0 0 auto',background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'8px 12px',display:'flex',flexDirection:'column',gap:8}}>
-<div>
-<div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>META DO DIA</div>
+{selectedRoute&&<div style={{flex:'0 0 auto',background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'8px 12px'}}>
+<div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>META DO DIA</div> {selectedRoute&&<div style={{flex:'0 0 auto',background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'8px 12px'}}>
+<div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>DATA ENTREGA</div>
+{dtEntrega?<div style={{display:'flex',alignItems:'center',gap:6}}>
+<span style={{fontWeight:800,color:ACCENT,fontSize:13}}>{new Date(dtEntrega+'T12:00:00').toLocaleDateString('pt-BR')}</span>
+<button onClick={()=>setDtEntrega('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button>
+</div>
+:<div style={{display:'flex',gap:4}}>
+<input type="date" value={dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0]} onChange={e=>setDtEntregaInput(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:11}}/>
+<button onClick={()=>handleSetDtEntrega(dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0])} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button>
+</div>}
+</div>}
 {dailyGoal?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:14}}>{fmt(dailyGoal)}</span><button onClick={()=>setDailyGoal('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
 :<div style={{display:'flex',gap:4}}><input type="number" placeholder="0,00" value={goalInput} onChange={e=>setGoalInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSetGoal()} style={{width:80,border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/><button onClick={handleSetGoal} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button></div>}
-</div>
-<div>
-<div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>DATA ENTREGA</div>
-{dtEntrega?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:13}}>{new Date(dtEntrega+'T12:00:00').toLocaleDateString('pt-BR')}</span><button onClick={()=>setDtEntrega('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
-:<div style={{display:'flex',gap:4}}><input type="date" value={dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0]} onChange={e=>setDtEntregaInput(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:11}}/><button onClick={()=>handleSetDtEntrega(dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0])} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button></div>}
-</div>
 </div>}
+</div>
+{activeTab==='dashboard'&&<div>
+{!selectedRoute?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>🗺️</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Selecione uma rota para começar</div></div>
+:(!dailyGoal||!dtEntrega)?<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'24px 16px',marginBottom:12}}>
+<div style={{textAlign:'center',marginBottom:20}}>
+<div style={{fontSize:36,marginBottom:8}}>🌅</div>
+<div style={{fontWeight:800,fontSize:16,color:TEXT}}>Configurar o dia</div>
+<div style={{fontSize:13,color:MUTED,marginTop:4}}>Rota: <strong>{selectedRoute}</strong></div>
+</div>
+<div style={{marginBottom:12}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>META DO DIA (R$)</label>
+<input type="number" placeholder="0,00" value={goalInput} onChange={e=>setGoalInput(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:16,boxSizing:'border-box',textAlign:'center'}}/>
+</div>
+<div style={{marginBottom:20}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DATA DE ENTREGA</label>
+<input type="date" value={dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0]} onChange={e=>setDtEntregaInput(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:16,boxSizing:'border-box',textAlign:'center'}}/>
+</div>
+<button onClick={async()=>{
+  if(!goalInput||isNaN(parseFloat(goalInput))){showToast('Informe a meta do dia.','error');return}
+  const dt=dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0]
+  await handleSetGoal()
+  handleSetDtEntrega(dt)
+}} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:800,fontSize:15,cursor:'pointer'}}>
+🚀 Começar o Dia
+</button>
+</div>:<>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+<KpiCard label="Na Rota" value={activeRouteClients.length} sub="clientes ativos" color={ACCENT}/>
+<KpiCard label="Atendidos" value={activeSoldIds.size} sub={`${activeRouteClients.length>0?Math.round((activeSoldIds.size/activeRouteClients.length)*100):0}%`} color={SUCCESS}/>
+<KpiCard label="Restantes" value={remaining} sub={remaining===0?'Concluído! 🎉':'a visitar'} color={remaining===0?SUCCESS:WARNING}/>
+<KpiCard label="Ticket Médio" value={fmt(avgTicket)} sub={ticketMeta>0?`Meta: ${fmt(ticketMeta)}`:`${activeSoldIds.size} venda(s)`} color={ticketColor}/>
+</div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+<span style={{fontWeight:700,fontSize:13}}>💰 Total Vendido</span>
+<span style={{fontWeight:800,fontSize:18,color:totalSold>=(dailyGoal||Infinity)?SUCCESS:ACCENT}}>{fmt(totalSold)}</span>
+</div>
+{dailyGoal>0&&<><div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:MUTED,marginBottom:6}}><span>Meta: {fmt(dailyGoal)}</span><span>{goalProgress.toFixed(1)}%</span></div>
+<div style={{background:SURFACE,borderRadius:99,height:8,overflow:'hidden'}}><div style={{width:`${goalProgress}%`,height:'100%',background:goalProgress>=100?SUCCESS:ACCENT,borderRadius:99,transition:'width 0.4s'}}/></div>
+<div style={{textAlign:'right',marginTop:4,fontSize:11,color:MUTED}}>Faltam {fmt(Math.max(dailyGoal-totalSold,0))}</div></>}
+</div>
+{inactiveSoldClients.length>0&&<div style={{background:'#FFF7ED',border:`1.5px solid ${WARNING}55`,borderRadius:12,padding:'12px 14px',marginBottom:12}}>
+<div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+<span>⚠️</span><span style={{fontWeight:700,fontSize:13,color:WARNING}}>Inativos Atendidos</span>
+<Badge color={WARNING}>{inactiveSoldClients.length}</Badge>
+<span style={{marginLeft:'auto',fontWeight:800,color:WARNING,fontSize:13}}>{fmt(inactiveSoldClients.reduce((a,s)=>a+s.value,0))}</span>
+</div>
+{inactiveSoldClients.map(s=><div key={s.id} style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0',borderTop:`1px solid ${WARNING}22`}}>
+<span style={{fontWeight:600}}>{s.client_name}</span><Badge color={WARNING}>{fmt(s.value)}</Badge>
+</div>)}
+</div>}
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span>🗺️ Mapa da Rota</span>
+<Badge color={ACCENT}>{routeClients.length} clientes</Badge>
+</div>
+{routeClients.length===0?<div style={{textAlign:'center',padding:'20px',color:MUTED}}>Nenhum cliente nesta rota</div>
+:routeClients.map((c,i)=>{
+const vendido=soldClientIds.has(c.id)||orders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+const temPedido=orders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,cursor:'pointer',background:vendido?'#F0FDF4':c.inactive?'#FFF7ED':'transparent'}}>
+<div style={{width:28,height:28,borderRadius:99,background:temPedido?WARNING:vendido?SUCCESS:c.inactive?'#FEE2E2':BORDER,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,flexShrink:0,color:'#fff',fontWeight:700}}>
+{temPedido?'📋':vendido?'✓':c.inactive?'⛔':i+1}
+</div>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
+<div style={{fontSize:11,color:MUTED}}>{temPedido?'Pedido pendente':vendido?'Atendido':'Aguardando visita'}</div>
+</div>
+<span style={{color:MUTED,fontSize:16}}>›</span>
+</div>})}
+</div>
+{routeSales.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>Vendas de Hoje</div>
+{[...routeSales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div><div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.note?' • '+s.note:''}</div></div>
+<Badge color={SUCCESS}>{fmt(s.value)}</Badge>
+<button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
+</div>)}
+</div>}
+</>}
 </div>}
 {activeTab==='clientes'&&<div>
 {clients.length===0?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>📂</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Nenhuma planilha importada</div></div>
@@ -612,4 +695,3 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>
 </div>)
 }
-
