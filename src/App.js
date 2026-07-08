@@ -94,7 +94,7 @@ useEffect(()=>{
   if(adminVendedorId){
     const fetchAdminData=async()=>{
       console.log('fetchAdminData chamado para:', adminVendedorId)
-      const{data:salesData}=await supabase.from('sales').select('*').eq('user_id',adminVendedorId).eq('date',today()).order('created_at')
+      const{data:salesData}=await supabase.from('sales').select('*').eq('user_id',adminVendedorId).eq('date',today()).eq('route',selectedRoute).order('created_at')
       setSales(salesData||[])
       const{data:ordersData}=await supabase.from('orders').select('*').eq('user_id',adminVendedorId).eq('status','pendente').eq('date',today()).order('created_at')
       setOrders(ordersData||[])
