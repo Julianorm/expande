@@ -90,6 +90,7 @@ const loadGoal=useCallback(async(route)=>{if(!route||!user?.id)return;const{data
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
 useEffect(()=>{loadGoal(selectedRoute)},[selectedRoute,loadGoal])
 useEffect(()=>{
+  console.log('adminVendedorId mudou:', adminVendedorId)
   if(user?.id===ADMIN_ID&&adminVendedorId){
     const fetchAdminData=async()=>{
       const{data:salesData}=await supabase.from('sales').select('*').eq('user_id',adminVendedorId).eq('date',today()).order('created_at')
@@ -117,6 +118,7 @@ const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(p
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
 const carregarVendedorDaRota=async(rota)=>{
+  console.log('carregarVendedorDaRota chamado', rota, user?.id, ADMIN_ID)
   if(!rota||user?.id!==ADMIN_ID){setAdminVendedorId(null);setAdminVendedorNome('');return}
   const{data}=await supabase.from('user_config').select('user_id,name,rotas').filter('rotas','cs',`{"${rota}"}`)
   if(data&&data.length>0){
