@@ -113,11 +113,12 @@ const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabS
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
 const carregarVendedorDaRota=async(rota)=>{
   if(!rota||user?.id!==ADMIN_ID){setAdminVendedorId(null);setAdminVendedorNome('');return}
-  const{data}=await supabase.from('user_config').select('user_id,name,rotas').contains('rotas',[rota])
+  const{data}=await supabase.from('user_config').select('user_id,name,rotas').filter('rotas','cs',`{"${rota}"}`)
   if(data&&data.length>0){
     const vendedor=data.find(v=>v.user_id!==ADMIN_ID)||data[0]
     setAdminVendedorId(vendedor.user_id)
     setAdminVendedorNome(vendedor.name||'')
+    showToast(`Acompanhando: ${vendedor.name}`)
   }else{
     setAdminVendedorId(null)
     setAdminVendedorNome('')
