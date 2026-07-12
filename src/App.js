@@ -438,7 +438,54 @@ await handleSetDtEntrega(dt)
 }} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:800,fontSize:15,cursor:'pointer'}}>
 🚀 Começar o Dia
 </button>
-</div>:<>
+</div>:user?.id===ADMIN_ID?<>
+{adminVendorsToday.length>0&&<div style={{background:ACCENT_LIGHT,border:`1px solid ${ACCENT}33`,borderRadius:10,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
+<span style={{fontSize:16}}>👤</span>
+<span style={{fontSize:12,color:MUTED,fontWeight:600}}>Atendido por:</span>
+<span style={{fontWeight:700,fontSize:13,color:ACCENT}}>{adminVendorsToday.join(', ')}</span>
+</div>}
+{adminLoading?<div style={{textAlign:'center',padding:'30px 0',color:MUTED}}>⏳ Carregando dados da rota...</div>:<>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+<KpiCard label="Na Rota" value={adminActiveRouteClients.length} sub="clientes ativos" color={ACCENT}/>
+<KpiCard label="Atendidos" value={adminSoldClientIds.size} sub={`${adminActiveRouteClients.length>0?Math.round((adminSoldClientIds.size/adminActiveRouteClients.length)*100):0}%`} color={SUCCESS}/>
+<KpiCard label="Restantes" value={adminActiveRouteClients.length-adminSoldClientIds.size} sub={adminActiveRouteClients.length-adminSoldClientIds.size===0?'Concluído! 🎉':'a visitar'} color={adminActiveRouteClients.length-adminSoldClientIds.size===0?SUCCESS:WARNING}/>
+<KpiCard label="Total Vendido" value={fmt(adminTotalSold)} sub={`${adminSales.length} venda(s)`} color={ACCENT}/>
+</div>
+{adminTotalPendente>0&&<div style={{background:'#FFFBEB',border:`1px solid ${WARNING}33`,borderRadius:12,padding:'12px 14px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span style={{fontWeight:700,fontSize:13,color:WARNING}}>📋 Pedidos pendentes de exportação</span>
+<span style={{fontWeight:800,fontSize:15,color:WARNING}}>{fmt(adminTotalPendente)}</span>
+</div>}
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span>🗺️ Mapa da Rota</span>
+<Badge color={ACCENT}>{adminActiveRouteClients.length} clientes</Badge>
+</div>
+{adminActiveRouteClients.length===0?<div style={{textAlign:'center',padding:'20px',color:MUTED}}>Nenhum cliente ativo nesta rota</div>
+:adminActiveRouteClients.map((c,i)=>{
+const vendido=adminSoldClientIds.has(c.id)||adminOrders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+const temPedido=adminOrders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+return<div key={c.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,background:vendido?'#F0FDF4':'transparent'}}>
+<div style={{width:28,height:28,borderRadius:99,background:temPedido?WARNING:vendido?SUCCESS:BORDER,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,flexShrink:0,color:'#fff',fontWeight:700}}>
+{temPedido?'📋':vendido?'✓':i+1}
+</div>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
+<div style={{fontSize:11,color:MUTED}}>{temPedido?'Pedido pendente':vendido?'Atendido':'Aguardando visita'}</div>
+</div>
+</div>})}
+</div>
+{adminSales.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>Vendas do Dia</div>
+{[...adminSales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
+<div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.note?' • '+s.note:''}{adminVendorNames[s.user_id]?' • '+adminVendorNames[s.user_id]:''}</div>
+</div>
+<Badge color={SUCCESS}>{fmt(s.value)}</Badge>
+</div>)}
+</div>}
+</>}
+</>:<>
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
 <KpiCard label="Na Rota" value={activeRouteClients.length} sub="clientes ativos" color={ACCENT}/>
 <KpiCard label="Atendidos" value={activeSoldIds.size} sub={`${activeRouteClients.length>0?Math.round((activeSoldIds.size/activeRouteClients.length)*100):0}%`} color={SUCCESS}/>
