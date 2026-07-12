@@ -30,8 +30,11 @@ const[activeTab,setActiveTab]=useState('dashboard')
 const[toast,setToast]=useState(null)
 const[dragOver,setDragOver]=useState(false)
 const[clientSearch,setClientSearch]=useState('')
-const[adminVendedorId,setAdminVendedorId]=useState(null)
-const[adminVendedorNome,setAdminVendedorNome]=useState('')
+const[adminDate,setAdminDate]=useState(today())
+const[adminSales,setAdminSales]=useState([])
+const[adminOrders,setAdminOrders]=useState([])
+const[adminVendorNames,setAdminVendorNames]=useState({})
+const[adminLoading,setAdminLoading]=useState(false)
 const[ordemEdit,setOrdemEdit]=useState({})
 const[ordemSaving,setOrdemSaving]=useState(false)
 const[tabSaleClient,setTabSaleClient]=useState(null)
@@ -87,21 +90,31 @@ const loadClients=useCallback(async()=>{if(!user?.id)return;const{data:userCfg}=
 const loadSales=useCallback(async(vendedorId)=>{if(!user?.id)return;const uid=vendedorId||(user.id===ADMIN_ID&&adminVendedorId?adminVendedorId:user.id);const{data,error}=await supabase.from('sales').select('*').eq('user_id',uid).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id,adminVendedorId])
 const loadOrders=useCallback(async(vendedorId)=>{if(!user?.id)return;const uid=vendedorId||(user.id===ADMIN_ID&&adminVendedorId?adminVendedorId:user.id);const{data,error}=await supabase.from('orders').select('*').eq('user_id',uid).eq('status','pendente').eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar pedidos.','error');return}setOrders(data||[])},[user?.id,adminVendedorId])
 const loadGoal=useCallback(async(route)=>{if(!route||!user?.id)return;const{data}=await supabase.from('daily_goals').select('goal_value,dt_entrega').eq('user_id',user.id).eq('route',route).eq('date',today()).single();setDailyGoal(data?.goal_value||'');setDtEntrega(data?.dt_entrega||'')},[user?.id])
+const loadAdminRouteData=useCallback(async(route,date)=>{
+  if(!route||user?.id!==ADMIN_ID)return
+  setAdminLoading(true)
+  const{data:salesData}=await supabase.from('sales').select('*').eq('route',route).eq('date',date).order('created_at')
+  const{data:ordersData}=await supabase.from('orders').select('*').eq('route',route).eq('date',date).order('created_at')
+  setAdminSales(salesData||[])
+  setAdminOrders(ordersData||[])
+  const userIds=[...new Set([...(salesData||[]).map(s=>s.user_id),...(ordersData||[]).map(o=>o.user_id)].filter(Boolean))]
+  if(userIds.length>0){
+    const{data:usersData}=await supabase.from('user_config').select('user_id,name').in('user_id',userIds)
+    const namesMap={}
+    ;(usersData||[]).forEach(u=>{namesMap[u.user_id]=u.name})
+    setAdminVendorNames(namesMap)
+  }else{
+    setAdminVendorNames({})
+  }
+  setAdminLoading(false)
+},[user?.id])
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
 useEffect(()=>{loadGoal(selectedRoute)},[selectedRoute,loadGoal])
 useEffect(()=>{
-  console.log('adminVendedorId mudou:', adminVendedorId)
-  if(adminVendedorId){
-    const fetchAdminData=async()=>{
-      console.log('fetchAdminData chamado para:', adminVendedorId)
-      const{data:salesData}=await supabase.from('sales').select('*').eq('user_id',adminVendedorId).eq('date',today()).eq('route',selectedRoute).order('created_at')
-      setSales(salesData||[])
-      const{data:ordersData}=await supabase.from('orders').select('*').eq('user_id',adminVendedorId).eq('status','pendente').eq('date',today()).order('created_at')
-      setOrders(ordersData||[])
-    }
-    fetchAdminData()
+  if(user?.id===ADMIN_ID&&selectedRoute){
+    loadAdminRouteData(selectedRoute,adminDate)
   }
-},[adminVendedorId,selectedRoute])
+},[user?.id,selectedRoute,adminDate,loadAdminRouteData])
 const importClients=useCallback(async(rows)=>{if(!user?.id)return;setLoading(true);await supabase.from('clients').delete().eq('empresa_id','mageski');const toInsert=rows.map(cols=>({empresa_id:'mageski',name:String(cols[0]).trim(),route:String(cols[1]).trim(),inactive:cols[2]&&String(cols[2]).trim().toLowerCase()==='inativo'}));const{error}=await supabase.from('clients').insert(toInsert);if(error){showToast('Erro ao salvar clientes.','error');setLoading(false);return}await loadClients();setSales([]);setSelectedRoute('');setDailyGoal('');setLoading(false);showToast(`${toInsert.length} clientes importados!`)},[user?.id,loadClients])
 const handleFile=useCallback((file)=>{if(!file)return;const reader=new FileReader();reader.onload=async(e)=>{try{const wb=XLSX.read(e.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(ws,{header:1});await importClients(data.slice(1).filter(r=>r[0]&&r[1]))}catch{showToast('Erro ao ler planilha.','error')}};reader.readAsBinaryString(file)},[importClients])
 const handlePaste=useCallback(async()=>{try{const lines=pasteText.trim().split('\n').filter(Boolean);if(lines.length<2){showToast('Cole ao menos uma linha além do cabeçalho.','error');return}const dataLines=lines[0].toLowerCase().includes('cliente')?lines.slice(1):lines;const rows=dataLines.map(l=>l.split('\t')).filter(c=>c[0]?.trim()&&c[1]?.trim());if(rows.length===0){showToast('Nenhum dado válido.','error');return}await importClients(rows);setShowPaste(false);setPasteText('')}catch{showToast('Erro ao processar dados.','error')}},[pasteText,importClients])
@@ -118,20 +131,6 @@ const handleSetGoal=async(dtEntregaParam)=>{if(!user?.id)return;const v=parseFlo
 const handleAddSale=async()=>{if(!user?.id||!selectedClient||!saleValue||isNaN(parseFloat(saleValue))){showToast('Selecione um cliente e informe o valor.','error');return}const client=clients.find(c=>c.id===selectedClient);const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:client.id,client_name:client.name,route:client.route,value:parseFloat(saleValue),note:saleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setSelectedClient('');setSaleValue('');setSaleNote('');showToast(`Venda de ${fmt(parseFloat(saleValue))} registrada!`)}
 const handleAddTabSale=async()=>{if(!user?.id||!tabSaleClientInput.trim()||!tabSaleValue||isNaN(parseFloat(tabSaleValue))){showToast('Informe o cliente e o valor.','error');return}const value=parseFloat(tabSaleValue);const matched=tabSaleClient?.name===tabSaleClientInput?tabSaleClient:null;const{data,error}=await supabase.from('sales').insert({user_id:user.id,client_id:matched?.id||null,client_name:tabSaleClientInput.trim(),route:matched?.route||selectedRoute||'—',value,note:tabSaleNote,sale_time:timeNow(),date:today()}).select().single();if(error){showToast('Erro ao registrar venda.','error');return}setSales(prev=>[...prev,data]);setTabSaleClient(null);setTabSaleClientInput('');setTabSaleValue('');setTabSaleNote('');showToast(`Venda de ${fmt(value)} registrada!`)}
 const handleRemoveSale=async(id)=>{const{error}=await supabase.from('sales').delete().eq('id',id);if(error){showToast('Erro ao remover venda.','error');return}setSales(prev=>prev.filter(s=>s.id!==id))}
-const carregarVendedorDaRota=async(rota)=>{
-  console.log('carregarVendedorDaRota chamado', rota, user?.id, ADMIN_ID)
-  if(!rota||user?.id!==ADMIN_ID){setAdminVendedorId(null);setAdminVendedorNome('');return}
-  const{data}=await supabase.from('user_config').select('user_id,name,rotas').filter('rotas','cs',`{"${rota}"}`)
-  if(data&&data.length>0){
-    const vendedor=data.find(v=>v.user_id!==ADMIN_ID)||data[0]
-    setAdminVendedorId(vendedor.user_id)
-    setAdminVendedorNome(vendedor.name||'')
-    showToast(`Acompanhando: ${vendedor.name}`)
-  }else{
-    setAdminVendedorId(null)
-    setAdminVendedorNome('')
-  }
-}
 const salvarOrdem=async(rota)=>{
   setOrdemSaving(true)
   const rotaClients=clients.filter(c=>c.route===rota)
@@ -394,8 +393,7 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
 {routes.length>0&&<div style={{flex:1,minWidth:150,background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'8px 12px'}}>
 <div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>ROTA DO DIA</div>
-<select value={selectedRoute} onChange={e=>{setSelectedRoute(e.target.value);setDailyGoal('');setDtEntrega('');carregarVendedorDaRota(e.target.value)}} style={{width:'100%',border:'none',background:'transparent',fontWeight:700,fontSize:13,color:TEXT,outline:'none'}}>
-<option value="">Selecionar…</option>
+<select value={selectedRoute} onChange={e=>{setSelectedRoute(e.target.value);setDailyGoal('');setDtEntrega('')}} style={{width:'100%',border:'none',background:'transparent',fontWeight:700,fontSize:13,color:TEXT,outline:'none'}}><option value="">Selecionar…</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
 </div>}
