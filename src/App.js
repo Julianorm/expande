@@ -397,11 +397,6 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
 </div>}
-{selectedRoute&&<div style={{flex:'0 0 auto',background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'8px 12px',display:'flex',flexDirection:'column',gap:8}}>
-{user?.id===ADMIN_ID&&<div>
-<div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>DATA</div>
-<input type="date" value={adminDate} onChange={e=>setAdminDate(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/>
-</div>}
 {user?.id===ADMIN_ID&&<div>
 <div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>DATA</div>
 <input type="date" value={adminDate} onChange={e=>setAdminDate(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/>
