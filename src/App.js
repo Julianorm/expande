@@ -299,6 +299,7 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <Tab id="clientes" label="Clientes" icon="👥"/>
 <Tab id="vendas" label="Vendas" icon="💰"/>
 <Tab id="pedido" label="Pedido" icon="🛒" badge={orders.length}/>
+<Tab id="relatorio" label="Relatório" icon="📈"/>
 {user?.id===ADMIN_ID&&<Tab id="config" label="Config" icon="⚙️"/>}
 </div>
 <div style={{padding:'12px 16px'}}>
@@ -761,6 +762,49 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <button onClick={exportarPedidos} disabled={exportLoading} style={{width:'100%',background:exportLoading?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:10,padding:'14px 0',fontWeight:800,fontSize:15,cursor:exportLoading?'not-allowed':'pointer',marginTop:4}}>
 {exportLoading?'Exportando…':'🚀 Exportar para eGestor'}
 </button>
+</>}
+</div>}
+{activeTab==='relatorio'&&<div>
+{user?.id!==ADMIN_ID?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>📈</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Em construção</div></div>
+:<>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Compras por Rota</div>
+<select value={relatorioRoute} onChange={e=>setRelatorioRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">Selecionar rota…</option>
+{routes.map(r=><option key={r} value={r}>{r}</option>)}
+</select>
+<div style={{display:'flex',gap:8,marginBottom:8}}>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
+<input type="date" value={relatorioInicio} onChange={e=>setRelatorioInicio(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>ATÉ</label>
+<input type="date" value={relatorioFim} onChange={e=>setRelatorioFim(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+</div>
+<button onClick={gerarRelatorio} disabled={relatorioLoading} style={{width:'100%',background:relatorioLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:relatorioLoading?'not-allowed':'pointer'}}>
+{relatorioLoading?'Gerando…':'📊 Gerar Relatório'}
+</button>
+</div>
+{relatorioClientes.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'auto'}}>
+<table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+<thead>
+<tr style={{background:SURFACE,borderBottom:`2px solid ${BORDER}`}}>
+<th style={{padding:'8px 10px',textAlign:'left',position:'sticky',left:0,background:SURFACE,minWidth:140}}>Cliente</th>
+{relatorioMeses.map(m=><th key={m} style={{padding:'8px 10px',textAlign:'right',whiteSpace:'nowrap'}}>{m}</th>)}
+<th style={{padding:'8px 10px',textAlign:'right',fontWeight:800}}>Total</th>
+</tr>
+</thead>
+<tbody>
+{relatorioClientes.map((c,i)=><tr key={c.id} style={{borderBottom:`1px solid ${BORDER}`,background:c.total===0?'#FEF2F2':i%2===0?CARD:SURFACE}}>
+<td style={{padding:'8px 10px',fontWeight:600,position:'sticky',left:0,background:c.total===0?'#FEF2F2':i%2===0?CARD:SURFACE}}>{c.name}{c.inactive?' ⛔':''}</td>
+{relatorioMeses.map(m=><td key={m} style={{padding:'8px 10px',textAlign:'right',color:c.totals[m]>0?TEXT:MUTED}}>{c.totals[m]>0?fmt(c.totals[m]):'—'}</td>)}
+<td style={{padding:'8px 10px',textAlign:'right',fontWeight:800,color:c.total>0?SUCCESS:DANGER}}>{fmt(c.total)}</td>
+</tr>)}
+</tbody>
+</table>
+</div>}
 </>}
 </div>}
 {activeTab==='config'&&user?.id===ADMIN_ID&&<div>
