@@ -453,7 +453,7 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 :<div style={{display:'flex',gap:4}}><input type="date" value={dtEntregaInput||''} onChange={e=>setDtEntregaInput(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:11}}/><button onClick={()=>handleSetDtEntrega(dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0])} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button></div>}
 </div>
 </div>}
-</div>
+</div>}
 {activeTab==='dashboard'&&<div>
 {!selectedRoute?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>🗺️</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Selecione uma rota para começar</div></div>
 :(user?.id!==ADMIN_ID&&(!dailyGoal||!dtEntrega))?<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'24px 16px',marginBottom:12}}>
