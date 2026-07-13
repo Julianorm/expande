@@ -35,6 +35,8 @@ const[adminSales,setAdminSales]=useState([])
 const[adminOrders,setAdminOrders]=useState([])
 const[adminVendorNames,setAdminVendorNames]=useState({})
 const[adminLoading,setAdminLoading]=useState(false)
+const[adminGoalValue,setAdminGoalValue]=useState('')
+const[adminDtEntregaValue,setAdminDtEntregaValue]=useState('')
 const[ordemEdit,setOrdemEdit]=useState({})
 const[ordemSaving,setOrdemSaving]=useState(false)
 const[tabSaleClient,setTabSaleClient]=useState(null)
@@ -113,6 +115,9 @@ const loadAdminRouteData=useCallback(async(route,date)=>{
   }else{
     setAdminVendorNames({})
   }
+  const{data:goalData}=await supabase.from('daily_goals').select('goal_value,dt_entrega').eq('route',route).eq('date',date).limit(1).maybeSingle()
+  setAdminGoalValue(goalData?.goal_value||'')
+  setAdminDtEntregaValue(goalData?.dt_entrega||'')
   setAdminLoading(false)
 },[user?.id])
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
@@ -444,13 +449,16 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <input type="date" value={adminDate} onChange={e=>setAdminDate(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/>
 </div>}
 <div>
+<div>
 <div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>META DO DIA</div>
-{dailyGoal?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:14}}>{fmt(dailyGoal)}</span><button onClick={()=>setDailyGoal('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
+{user?.id===ADMIN_ID?<span style={{fontWeight:800,color:ACCENT,fontSize:14}}>{adminGoalValue?fmt(adminGoalValue):'—'}</span>
+:dailyGoal?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:14}}>{fmt(dailyGoal)}</span><button onClick={()=>setDailyGoal('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
 :<div style={{display:'flex',gap:4}}><input type="number" placeholder="0,00" value={goalInput} onChange={e=>setGoalInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSetGoal()} style={{width:80,border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/><button onClick={handleSetGoal} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button></div>}
 </div>
 <div>
 <div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>DATA ENTREGA</div>
-{dtEntrega?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:13}}>{new Date(dtEntrega+'T12:00:00').toLocaleDateString('pt-BR')}</span><button onClick={()=>setDtEntrega('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
+{user?.id===ADMIN_ID?<span style={{fontWeight:800,color:ACCENT,fontSize:13}}>{adminDtEntregaValue?new Date(adminDtEntregaValue+'T12:00:00').toLocaleDateString('pt-BR'):'—'}</span>
+:dtEntrega?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:13}}>{new Date(dtEntrega+'T12:00:00').toLocaleDateString('pt-BR')}</span><button onClick={()=>setDtEntrega('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
 :<div style={{display:'flex',gap:4}}><input type="date" value={dtEntregaInput||''} onChange={e=>setDtEntregaInput(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:11}}/><button onClick={()=>handleSetDtEntrega(dtEntregaInput||new Date(Date.now()+86400000).toISOString().split('T')[0])} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:6,padding:'4px 8px',fontWeight:700,cursor:'pointer',fontSize:11}}>OK</button></div>}
 </div>
 </div>}
