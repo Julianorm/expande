@@ -253,6 +253,7 @@ const atualizarSenha=async(user_id)=>{const nova=senhaUser[user_id];if(!nova||no
 const totalPedido=pedidoProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0)
 const routeClients=useMemo(()=>selectedRoute?clients.filter(c=>(c.rotas||[c.route]).includes(selectedRoute)):[],[clients,selectedRoute])
 const routeSales=useMemo(()=>sales.filter(s=>s.route===selectedRoute),[sales,selectedRoute])
+const routeOrders=useMemo(()=>orders.filter(o=>o.route===selectedRoute),[orders,selectedRoute])
 const soldClientIds=useMemo(()=>new Set(routeSales.map(s=>s.client_id).filter(Boolean)),[routeSales])
 const inactiveSoldClients=useMemo(()=>routeSales.filter(s=>clients.find(c=>c.id===s.client_id)?.inactive),[routeSales,clients])
 const activeRouteClients=useMemo(()=>routeClients.filter(c=>!c.inactive),[routeClients])
@@ -613,8 +614,10 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 </div>}
 {activeTab==='vendas'&&<div>
 {(()=>{
-const totalExportado=sales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0)
-const totalPendente=orders.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0)
+const vendasBase=selectedRoute?routeSales:sales
+const pedidosBase=selectedRoute?routeOrders:orders
+const totalExportado=vendasBase.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0)
+const totalPendente=pedidosBase.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0)
 const totalGeral=totalExportado+totalPendente
 const progresso=dailyGoal>0?Math.min((totalGeral/dailyGoal)*100,100):0
 return<>
@@ -637,23 +640,23 @@ return<>
 </>}
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:12}}>
 <div style={{background:SURFACE,borderRadius:8,padding:'8px',textAlign:'center'}}>
-<div style={{fontWeight:800,fontSize:16,color:SUCCESS}}>{sales.length}</div>
+<div style={{fontWeight:800,fontSize:16,color:SUCCESS}}>{vendasBase.length}</div>
 <div style={{fontSize:10,color:MUTED,fontWeight:600}}>EXPORTADOS</div>
 </div>
 <div style={{background:SURFACE,borderRadius:8,padding:'8px',textAlign:'center'}}>
-<div style={{fontWeight:800,fontSize:16,color:WARNING}}>{orders.length}</div>
+<div style={{fontWeight:800,fontSize:16,color:WARNING}}>{pedidosBase.length}</div>
 <div style={{fontSize:10,color:MUTED,fontWeight:600}}>PENDENTES</div>
 </div>
 <div style={{background:SURFACE,borderRadius:8,padding:'8px',textAlign:'center'}}>
-<div style={{fontWeight:800,fontSize:16,color:ACCENT}}>{sales.length+orders.length}</div>
+<div style={{fontWeight:800,fontSize:16,color:ACCENT}}>{vendasBase.length+pedidosBase.length}</div>
 <div style={{fontSize:10,color:MUTED,fontWeight:600}}>TOTAL</div>
 </div>
 </div>
 </div>
-{sales.length>0&&<>
-<div style={{fontWeight:700,fontSize:13,marginBottom:8,color:SUCCESS}}>✅ Exportados para eGestor ({sales.length})</div>
+{vendasBase.length>0&&<>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8,color:SUCCESS}}>✅ Exportados para eGestor ({vendasBase.length})</div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
-{[...sales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+{[...vendasBase].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
 <div style={{flex:1}}>
 <div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
 <div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.route?' • '+s.route:''}{s.note?' • '+s.note:''}</div>
@@ -662,10 +665,10 @@ return<>
 </div>)}
 </div>
 </>}
-{orders.length>0&&<>
-<div style={{fontWeight:700,fontSize:13,marginBottom:8,color:WARNING}}>📋 A Exportar ({orders.length})</div>
+{pedidosBase.length>0&&<>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8,color:WARNING}}>📋 A Exportar ({pedidosBase.length})</div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
-{orders.map((o,i)=><div key={o.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+{pedidosBase.map((o,i)=><div key={o.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
 <div style={{flex:1}}>
 <div style={{fontWeight:600,fontSize:13}}>{o.client_name}</div>
 <div style={{fontSize:11,color:MUTED}}>{o.situacao} • {o.produtos?.length} produto(s)</div>
@@ -673,9 +676,9 @@ return<>
 <Badge color={WARNING}>{fmt(o.total)}</Badge>
 </div>)}
 </div>
-{orders.length>0&&<button onClick={()=>setActiveTab('pedido')} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:10,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🚀 Ir para Exportar</button>}
+{pedidosBase.length>0&&<button onClick={()=>setActiveTab('pedido')} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:10,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🚀 Ir para Exportar</button>}
 </>}
-{sales.length===0&&orders.length===0&&<div style={{textAlign:'center',padding:'40px 20px',color:MUTED,background:CARD,border:`1px solid ${BORDER}`,borderRadius:12}}><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontWeight:700}}>Nenhuma venda hoje</div></div>}
+{vendasBase.length===0&&pedidosBase.length===0&&<div style={{textAlign:'center',padding:'40px 20px',color:MUTED,background:CARD,border:`1px solid ${BORDER}`,borderRadius:12}}><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontWeight:700}}>Nenhuma venda hoje</div></div>}
 </>})()}
 </div>}
 {activeTab==='pedido'&&<div>
