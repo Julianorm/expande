@@ -225,6 +225,11 @@ const ticketColor=ticketMeta===0?ACCENT:avgTicket>=ticketMeta?SUCCESS:avgTicket>
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
 const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch])
+const adminActiveRouteClients=useMemo(()=>selectedRoute?clients.filter(c=>(c.rotas||[c.route]).includes(selectedRoute)&&!c.inactive):[],[clients,selectedRoute])
+const adminSoldClientIds=useMemo(()=>new Set(adminSales.map(s=>s.client_id).filter(Boolean)),[adminSales])
+const adminTotalSold=useMemo(()=>adminSales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0),[adminSales])
+const adminTotalPendente=useMemo(()=>adminOrders.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0),[adminOrders])
+const adminVendorsToday=useMemo(()=>{const ids=[...new Set([...adminSales.map(s=>s.user_id),...adminOrders.map(o=>o.user_id)].filter(Boolean))];return ids.map(id=>adminVendorNames[id]||'Desconhecido')},[adminSales,adminOrders,adminVendorNames])
 const Tab=({id,label,icon,badge})=><button onClick={()=>setActiveTab(id)} style={{background:activeTab===id?ACCENT:'transparent',color:activeTab===id?'#fff':MUTED,border:'none',borderRadius:8,padding:'6px 10px',fontWeight:600,fontSize:11,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,minWidth:56,position:'relative'}}>
 {badge>0&&<span style={{position:'absolute',top:2,right:8,background:DANGER,color:'#fff',borderRadius:99,fontSize:9,fontWeight:700,padding:'1px 5px'}}>{badge}</span>}
 <span style={{fontSize:18}}>{icon}</span><span>{label}</span></button>
