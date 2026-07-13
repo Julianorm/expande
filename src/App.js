@@ -85,6 +85,12 @@ const[editOrderSearch,setEditOrderSearch]=useState('')
 const[editOrderResultados,setEditOrderResultados]=useState([])
 const[editOrderFormaPgto,setEditOrderFormaPgto]=useState('')
 const[editOrderSituacao,setEditOrderSituacao]=useState('Pedido S/ NFe')
+const[relatorioRoute,setRelatorioRoute]=useState('')
+const[relatorioInicio,setRelatorioInicio]=useState('')
+const[relatorioFim,setRelatorioFim]=useState('')
+const[relatorioLoading,setRelatorioLoading]=useState(false)
+const[relatorioClientes,setRelatorioClientes]=useState([])
+const[relatorioMeses,setRelatorioMeses]=useState([])
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const loadClients=useCallback(async()=>{if(!user?.id)return;const{data:userCfg}=await supabase.from('user_config').select('rotas').eq('user_id',user.id).single();const rotasUser=userCfg?.rotas||[];const query=supabase.from('clients').select('*').order('route').order('ordem');const{data,error}=rotasUser.length>0?await query.overlaps('rotas',rotasUser):await query;if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data||[]);setRoutes([...new Set((data||[]).map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
@@ -203,6 +209,34 @@ const excluirPedido=async(id)=>{const{error}=await supabase.from('orders').delet
 const exportarPedidos=async()=>{const pendentes=orders.filter(o=>o.status==='pendente');if(pendentes.length===0){showToast('Nenhum pedido pendente','error');return}setExportLoading(true);let ok=0;let erros=0;for(const order of pendentes){try{const res=await fetch(`${EGESTOR_API}?action=criar_venda`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codContato:order.client_erp_code,nomeContato:order.client_name,route:order.route,user_id:user.id,produtos:order.produtos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),codFormaPgto:order.forma_pgto,vencimento:order.vencimento||today(),situacaoOS:order.situacao,dtEntrega:dtEntrega||new Date(Date.now()+86400000).toISOString().split('T')[0]})});const result=await res.json();if(result.codigo){const{data:saleData}=await supabase.from('sales').select('id').eq('erp_code',result.codigo).single();if(saleData?.id){const items=order.produtos.map(p=>({sale_id:saleData.id,user_id:user.id,client_erp_code:order.client_erp_code,erp_code:p.codigo,descricao:p.descricao,codigo_proprio:p.codigoProprio||'',quant:p.quant,preco:p.precoVenda,vdesc:p.vDesc||0,total:p.precoVenda*p.quant*(1-(p.vDesc||0)/100),date:today()}));await supabase.from('sales_items').insert(items)}await supabase.from('orders').delete().eq('id',order.id);ok++}else{erros++}}catch(err){erros++}}await loadOrders();await loadSales();setExportLoading(false);if(erros===0){showToast(`${ok} pedido(s) exportado(s)!`)}else{showToast(`${ok} exportado(s), ${erros} com erro`,'error')}}
 const abrirEdicaoOrder=async(order)=>{setEditandoOrder(order);setEditOrderProdutos(order.produtos||[]);setEditOrderFormaPgto(String(order.forma_pgto||'1'));setEditOrderSituacao(order.situacao||'Pedido S/ NFe')}
 const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===0){showToast('Adicione ao menos um produto','error');return}const total=editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0);const{error}=await supabase.from('orders').update({produtos:editOrderProdutos,forma_pgto:parseInt(editOrderFormaPgto),situacao:editOrderSituacao,total}).eq('id',editandoOrder.id);if(error){showToast('Erro ao salvar','error');return}showToast('Pedido atualizado!');setEditandoOrder(null);await loadOrders()}
+const gerarRelatorio=async()=>{
+  if(!relatorioRoute||!relatorioInicio||!relatorioFim){showToast('Selecione rota e período.','error');return}
+  setRelatorioLoading(true)
+  const{data:salesData,error}=await supabase.from('sales').select('*').eq('route',relatorioRoute).gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
+  if(error){showToast('Erro ao carregar relatório.','error');setRelatorioLoading(false);return}
+  const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute))
+  const meses=[]
+  let d=new Date(relatorioInicio+'T12:00:00')
+  const fimData=new Date(relatorioFim+'T12:00:00')
+  while(d<=fimData){
+    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`)
+    d.setMonth(d.getMonth()+1)
+  }
+  const mesesUnicos=[...new Set(meses)]
+  const clientesData=routeClients.map(c=>{
+    const totals={}
+    mesesUnicos.forEach(m=>totals[m]=0)
+    let total=0
+    ;(salesData||[]).filter(s=>s.client_id===c.id).forEach(s=>{
+      const mes=s.date.slice(0,7)
+      if(totals[mes]!==undefined){totals[mes]+=s.value;total+=s.value}
+    })
+    return{id:c.id,name:c.name,inactive:c.inactive,totals,total}
+  }).sort((a,b)=>b.total-a.total)
+  setRelatorioMeses(mesesUnicos)
+  setRelatorioClientes(clientesData)
+  setRelatorioLoading(false)
+}
 const buscarProdutos=async(search,setResultados)=>{if(search.length<2){setResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();const filtrado=(Array.isArray(data)?data:[]).filter(p=>p.descricao?.toLowerCase().includes(search.toLowerCase())||p.codigoProprio?.toLowerCase().includes(search.toLowerCase()));setResultados(filtrado)}catch(err){showToast('Erro ao buscar produtos','error')}}
 const addProduto=(produto,setProdutos,setSearch,setResultados)=>{setProdutoModal({produto,setProdutos,setSearch,setResultados});setProdutoModalQuant(1);setProdutoModalDesc(0);setSearch('');setResultados([])}
 const confirmarProdutoModal=()=>{if(!produtoModal)return;const{produto,setProdutos}=produtoModal;setProdutos(prev=>{const existe=prev.find(p=>p.codigo===produto.codigo);if(existe)return prev.map(p=>p.codigo===produto.codigo?{...p,quant:p.quant+produtoModalQuant,vDesc:produtoModalDesc}:p);return[...prev,{...produto,quant:produtoModalQuant,vDesc:produtoModalDesc}]});setProdutoModal(null)}
