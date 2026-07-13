@@ -449,7 +449,6 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <input type="date" value={adminDate} onChange={e=>setAdminDate(e.target.value)} style={{border:`1px solid ${BORDER}`,borderRadius:6,padding:'4px 6px',fontSize:12}}/>
 </div>}
 <div>
-<div>
 <div style={{fontWeight:700,fontSize:11,marginBottom:3,color:MUTED}}>META DO DIA</div>
 {user?.id===ADMIN_ID?<span style={{fontWeight:800,color:ACCENT,fontSize:14}}>{adminGoalValue?fmt(adminGoalValue):'—'}</span>
 :dailyGoal?<div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontWeight:800,color:ACCENT,fontSize:14}}>{fmt(dailyGoal)}</span><button onClick={()=>setDailyGoal('')} style={{background:'none',border:'none',color:MUTED,cursor:'pointer',fontSize:12}}>✏️</button></div>
