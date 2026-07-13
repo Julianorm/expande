@@ -614,21 +614,22 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 </div>}
 {activeTab==='vendas'&&<div>
 {(()=>{
-const vendasBase=selectedRoute?routeSales:sales
-const pedidosBase=selectedRoute?routeOrders:orders
+const vendasBase=user?.id===ADMIN_ID?adminSales:(selectedRoute?routeSales:sales)
+const pedidosBase=user?.id===ADMIN_ID?adminOrders:(selectedRoute?routeOrders:orders)
 const totalExportado=vendasBase.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0)
 const totalPendente=pedidosBase.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0)
 const totalGeral=totalExportado+totalPendente
-const progresso=dailyGoal>0?Math.min((totalGeral/dailyGoal)*100,100):0
+const metaBase=user?.id===ADMIN_ID?adminGoalValue:dailyGoal
+const progresso=metaBase>0?Math.min((totalGeral/metaBase)*100,100):0
 return<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
 <span style={{fontWeight:700,fontSize:14}}>💰 Total do Dia</span>
 <span style={{fontWeight:800,fontSize:18,color:ACCENT}}>{fmt(totalGeral)}</span>
 </div>
-{dailyGoal>0&&<>
+{metaBase>0&&<>
 <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:MUTED,marginBottom:6}}>
-<span>Meta: {fmt(dailyGoal)}</span><span>{progresso.toFixed(1)}%</span>
+<span>Meta: {fmt(metaBase)}</span><span>{progresso.toFixed(1)}%</span>
 </div>
 <div style={{background:SURFACE,borderRadius:99,height:8,overflow:'hidden'}}>
 <div style={{width:`${progresso}%`,height:'100%',background:progresso>=100?SUCCESS:ACCENT,borderRadius:99,transition:'width 0.4s'}}/>
