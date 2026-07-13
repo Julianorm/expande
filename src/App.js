@@ -91,6 +91,7 @@ const[relatorioFim,setRelatorioFim]=useState('')
 const[relatorioLoading,setRelatorioLoading]=useState(false)
 const[relatorioClientes,setRelatorioClientes]=useState([])
 const[relatorioMeses,setRelatorioMeses]=useState([])
+const[relatorioIncluirInativos,setRelatorioIncluirInativos]=useState(false)
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const loadClients=useCallback(async()=>{if(!user?.id)return;const{data:userCfg}=await supabase.from('user_config').select('rotas').eq('user_id',user.id).single();const rotasUser=userCfg?.rotas||[];const query=supabase.from('clients').select('*').order('route').order('ordem');const{data,error}=rotasUser.length>0?await query.overlaps('rotas',rotasUser):await query;if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data||[]);setRoutes([...new Set((data||[]).map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
@@ -214,7 +215,7 @@ const gerarRelatorio=async()=>{
   setRelatorioLoading(true)
   const{data:salesData,error}=await supabase.from('sales').select('*').eq('route',relatorioRoute).gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
   if(error){showToast('Erro ao carregar relatório.','error');setRelatorioLoading(false);return}
-  const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute))
+const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive))
   const meses=[]
   let d=new Date(relatorioInicio+'T12:00:00')
   const fimData=new Date(relatorioFim+'T12:00:00')
@@ -783,8 +784,11 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <input type="date" value={relatorioFim} onChange={e=>setRelatorioFim(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
 </div>
 </div>
-<button onClick={gerarRelatorio} disabled={relatorioLoading} style={{width:'100%',background:relatorioLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:relatorioLoading?'not-allowed':'pointer'}}>
-{relatorioLoading?'Gerando…':'📊 Gerar Relatório'}
+<label style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,cursor:'pointer'}}>
+<input type="checkbox" checked={relatorioIncluirInativos} onChange={e=>setRelatorioIncluirInativos(e.target.checked)} style={{width:16,height:16,cursor:'pointer'}}/>
+<span style={{fontSize:13,color:TEXT,fontWeight:600}}>Incluir clientes inativos</span>
+</label>
+<button onClick={gerarRelatorio} disabled={relatorioLoading} style={{width:'100%',background:relatorioLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:relatorioLoading?'not-allowed':'pointer'}}>{relatorioLoading?'Gerando…':'📊 Gerar Relatório'}
 </button>
 </div>
 {relatorioClientes.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'auto'}}>
