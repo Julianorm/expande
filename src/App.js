@@ -218,6 +218,36 @@ const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===
 const gerarRelatorio=async()=>{
   if(!relatorioRoute||!relatorioInicio||!relatorioFim){showToast('Selecione rota e período.','error');return}
   setRelatorioLoading(true)
+  try{
+    const{data:salesData,error}=await supabase.from('sales').select('*').eq('route',relatorioRoute).gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
+    if(error){showToast('Erro ao carregar relatório: '+error.message,'error');setRelatorioLoading(false);return}
+    const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive))
+    const meses=[]
+    let d=new Date(relatorioInicio+'T12:00:00')
+    const fimData=new Date(relatorioFim+'T12:00:00')
+    while(d<=fimData){
+      meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`)
+      d.setMonth(d.getMonth()+1)
+    }
+    const mesesUnicos=[...new Set(meses)]
+    const clientesData=routeClients.map(c=>{
+      const totals={}
+      mesesUnicos.forEach(m=>totals[m]=0)
+      let total=0
+      ;(salesData||[]).filter(s=>s.client_id===c.id).forEach(s=>{
+        const mes=s.date.slice(0,7)
+        if(totals[mes]!==undefined){totals[mes]+=s.value;total+=s.value}
+      })
+      return{id:c.id,name:c.name,inactive:c.inactive,totals,total}
+    }).sort((a,b)=>b.total-a.total)
+    setRelatorioMeses(mesesUnicos)
+    setRelatorioClientes(clientesData)
+  }catch(err){
+    showToast('Erro inesperado ao gerar relatório.','error')
+    console.error(err)
+  }
+  setRelatorioLoading(false)
+}
 const exportarRelatorioExcel=()=>{
   const header=['Cliente',...relatorioMeses,'Total']
   const rows=relatorioClientes.map(c=>[c.name,...relatorioMeses.map(m=>c.totals[m]||0),c.total])
@@ -226,31 +256,6 @@ const exportarRelatorioExcel=()=>{
   const wb=XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb,ws,'Relatório')
   XLSX.writeFile(wb,`Relatorio_${relatorioRoute.replace(/\s/g,'_')}_${relatorioInicio}_a_${relatorioFim}.xlsx`)
-}
-  const{data:salesData,error}=await supabase.from('sales').select('*').eq('route',relatorioRoute).gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
-  if(error){showToast('Erro ao carregar relatório.','error');setRelatorioLoading(false);return}
-const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive))
-  const meses=[]
-  let d=new Date(relatorioInicio+'T12:00:00')
-  const fimData=new Date(relatorioFim+'T12:00:00')
-  while(d<=fimData){
-    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`)
-    d.setMonth(d.getMonth()+1)
-  }
-  const mesesUnicos=[...new Set(meses)]
-  const clientesData=routeClients.map(c=>{
-    const totals={}
-    mesesUnicos.forEach(m=>totals[m]=0)
-    let total=0
-    ;(salesData||[]).filter(s=>s.client_id===c.id).forEach(s=>{
-      const mes=s.date.slice(0,7)
-      if(totals[mes]!==undefined){totals[mes]+=s.value;total+=s.value}
-    })
-    return{id:c.id,name:c.name,inactive:c.inactive,totals,total}
-  }).sort((a,b)=>b.total-a.total)
-  setRelatorioMeses(mesesUnicos)
-  setRelatorioClientes(clientesData)
-  setRelatorioLoading(false)
 }
 const buscarProdutos=async(search,setResultados)=>{if(search.length<2){setResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();const filtrado=(Array.isArray(data)?data:[]).filter(p=>p.descricao?.toLowerCase().includes(search.toLowerCase())||p.codigoProprio?.toLowerCase().includes(search.toLowerCase()));setResultados(filtrado)}catch(err){showToast('Erro ao buscar produtos','error')}}
 const addProduto=(produto,setProdutos,setSearch,setResultados)=>{setProdutoModal({produto,setProdutos,setSearch,setResultados});setProdutoModalQuant(1);setProdutoModalDesc(0);setSearch('');setResultados([])}
