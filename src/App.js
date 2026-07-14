@@ -218,6 +218,21 @@ const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===
 const gerarRelatorio=async()=>{
   if(!relatorioRoute||!relatorioInicio||!relatorioFim){showToast('Selecione rota e período.','error');return}
   setRelatorioLoading(true)
+const relatorioTotaisPorMes=useMemo(()=>{
+  const totais={}
+  relatorioMeses.forEach(m=>{totais[m]=relatorioClientes.reduce((a,c)=>a+(c.totals[m]||0),0)})
+  return totais
+},[relatorioClientes,relatorioMeses])
+const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
+const exportarRelatorioExcel=()=>{
+  const header=['Cliente',...relatorioMeses,'Total']
+  const rows=relatorioClientes.map(c=>[c.name,...relatorioMeses.map(m=>c.totals[m]||0),c.total])
+  rows.push(['TOTAL',...relatorioMeses.map(m=>relatorioTotaisPorMes[m]),relatorioTotalGeral])
+  const ws=XLSX.utils.aoa_to_sheet([header,...rows])
+  const wb=XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb,ws,'Relatório')
+  XLSX.writeFile(wb,`Relatorio_${relatorioRoute.replace(/\s/g,'_')}_${relatorioInicio}_a_${relatorioFim}.xlsx`)
+}
   const{data:salesData,error}=await supabase.from('sales').select('*').eq('route',relatorioRoute).gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
   if(error){showToast('Erro ao carregar relatório.','error');setRelatorioLoading(false);return}
 const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive))
