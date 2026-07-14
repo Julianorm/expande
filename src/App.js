@@ -814,8 +814,12 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <input type="checkbox" checked={relatorioIncluirInativos} onChange={e=>setRelatorioIncluirInativos(e.target.checked)} style={{width:16,height:16,cursor:'pointer'}}/>
 <span style={{fontSize:13,color:TEXT,fontWeight:600}}>Incluir clientes inativos</span>
 </label>
-<button onClick={gerarRelatorio} disabled={relatorioLoading} style={{width:'100%',background:relatorioLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:relatorioLoading?'not-allowed':'pointer'}}>{relatorioLoading?'Gerando…':'📊 Gerar Relatório'}
+<button onClick={gerarRelatorio} disabled={relatorioLoading} style={{width:'100%',background:relatorioLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:relatorioLoading?'not-allowed':'pointer'}}>
+{relatorioLoading?'Gerando…':'📊 Gerar Relatório'}
 </button>
+{relatorioClientes.length>0&&<button onClick={exportarRelatorioExcel} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer',marginTop:8}}>
+📥 Exportar para Excel
+</button>}
 </div>
 {relatorioClientes.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'auto'}}>
 <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
@@ -832,6 +836,11 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 {relatorioMeses.map(m=><td key={m} style={{padding:'8px 10px',textAlign:'right',color:c.totals[m]>0?TEXT:MUTED}}>{c.totals[m]>0?fmt(c.totals[m]):'—'}</td>)}
 <td style={{padding:'8px 10px',textAlign:'right',fontWeight:800,color:c.total>0?SUCCESS:DANGER}}>{fmt(c.total)}</td>
 </tr>)}
+<tr style={{background:'#1e293b',color:'#fff'}}>
+<td style={{padding:'8px 10px',fontWeight:800,position:'sticky',left:0,background:'#1e293b'}}>TOTAL</td>
+{relatorioMeses.map(m=><td key={m} style={{padding:'8px 10px',textAlign:'right',fontWeight:700}}>{fmt(relatorioTotaisPorMes[m]||0)}</td>)}
+<td style={{padding:'8px 10px',textAlign:'right',fontWeight:800}}>{fmt(relatorioTotalGeral)}</td>
+</tr>
 </tbody>
 </table>
 </div>}
