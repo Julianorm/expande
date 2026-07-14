@@ -218,12 +218,6 @@ const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===
 const gerarRelatorio=async()=>{
   if(!relatorioRoute||!relatorioInicio||!relatorioFim){showToast('Selecione rota e período.','error');return}
   setRelatorioLoading(true)
-const relatorioTotaisPorMes=useMemo(()=>{
-  const totais={}
-  relatorioMeses.forEach(m=>{totais[m]=relatorioClientes.reduce((a,c)=>a+(c.totals[m]||0),0)})
-  return totais
-},[relatorioClientes,relatorioMeses])
-const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
 const exportarRelatorioExcel=()=>{
   const header=['Cliente',...relatorioMeses,'Total']
   const rows=relatorioClientes.map(c=>[c.name,...relatorioMeses.map(m=>c.totals[m]||0),c.total])
@@ -281,6 +275,12 @@ const ticketColor=ticketMeta===0?ACCENT:avgTicket>=ticketMeta?SUCCESS:avgTicket>
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
 const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch])
+const relatorioTotaisPorMes=useMemo(()=>{
+  const totais={}
+  relatorioMeses.forEach(m=>{totais[m]=relatorioClientes.reduce((a,c)=>a+(c.totals[m]||0),0)})
+  return totais
+},[relatorioClientes,relatorioMeses])
+const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
 const adminActiveRouteClients=useMemo(()=>selectedRoute?clients.filter(c=>(c.rotas||[c.route]).includes(selectedRoute)&&!c.inactive):[],[clients,selectedRoute])
 const adminSoldClientIds=useMemo(()=>new Set(adminSales.map(s=>s.client_id).filter(Boolean)),[adminSales])
 const adminTotalSold=useMemo(()=>adminSales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0),[adminSales])
