@@ -586,6 +586,7 @@ return<div key={c.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORD
 <div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
 <div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.note?' • '+s.note:''}{adminVendorNames[s.user_id]?' • '+adminVendorNames[s.user_id]:''}</div>
 </div>
+{s.gps_lat&&s.gps_lng&&<a href={`https://www.google.com/maps?q=${s.gps_lat},${s.gps_lng}`} target="_blank" rel="noopener noreferrer" style={{fontSize:16,textDecoration:'none'}} title="Ver localização">📍</a>}
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 </div>)}
 </div>}
