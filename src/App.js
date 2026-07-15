@@ -15,6 +15,15 @@ const getGpsLocation=()=>new Promise(resolve=>{
     {timeout:5000,maximumAge:60000}
   )
 })
+const checkGpsPermission=()=>{
+  if(!navigator.geolocation){setGpsStatus('denied');return}
+  setGpsStatus('checking')
+  navigator.geolocation.getCurrentPosition(
+    ()=>setGpsStatus('granted'),
+    ()=>setGpsStatus('denied'),
+    {timeout:8000,maximumAge:0}
+  )
+}
 const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
 const ADMIN_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/admin-api'
 const ADMIN_ID='7ad867ea-496c-412c-8acd-5cc7c21eca0e'
@@ -89,6 +98,7 @@ const[produtoModal,setProdutoModal]=useState(null)
 const[produtoModalQuant,setProdutoModalQuant]=useState(1)
 const[produtoModalDesc,setProdutoModalDesc]=useState(0)
 const[exportLoading,setExportLoading]=useState(false)
+const[gpsStatus,setGpsStatus]=useState('checking')
 const exportingRef=useState(()=>({current:false}))[0]
 const[editandoOrder,setEditandoOrder]=useState(null)
 const[editOrderProdutos,setEditOrderProdutos]=useState([])
@@ -130,6 +140,7 @@ const loadAdminRouteData=useCallback(async(route,date)=>{
   setAdminLoading(false)
 },[user?.id])
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
+useEffect(()=>{if(user?.id){checkGpsPermission()}},[user?.id])
 useEffect(()=>{loadGoal(selectedRoute)},[selectedRoute,loadGoal])
 useEffect(()=>{
   if(user?.id===ADMIN_ID&&selectedRoute){
@@ -316,6 +327,22 @@ const ProdutoCard=({p,onChange,onRemove})=><div style={{background:SURFACE,borde
 <div style={{flex:1,textAlign:'right'}}><div style={{fontSize:10,color:MUTED,marginBottom:2}}>TOTAL</div><div style={{fontWeight:700,color:SUCCESS,fontSize:12}}>{fmt(p.precoVenda*p.quant*(1-(p.vDesc||0)/100))}</div></div>
 </div>
 </div>
+if(user?.id&&gpsStatus==='denied'){
+  return<div style={{minHeight:'100vh',background:'#1e293b',display:'flex',alignItems:'center',justifyContent:'center',padding:24,fontFamily:"'Inter',system-ui,sans-serif"}}>
+    <div style={{background:CARD,borderRadius:16,padding:32,maxWidth:360,textAlign:'center'}}>
+      <div style={{fontSize:48,marginBottom:16}}>📍</div>
+      <div style={{fontWeight:800,fontSize:18,color:TEXT,marginBottom:8}}>Localização necessária</div>
+      <div style={{fontSize:14,color:MUTED,marginBottom:24,lineHeight:1.5}}>Para usar o eXpande, é necessário permitir o acesso à localização. Isso é usado para registrar corretamente suas visitas.</div>
+      <button onClick={checkGpsPermission} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'14px 0',fontWeight:700,fontSize:15,cursor:'pointer',marginBottom:12}}>Tentar novamente</button>
+      <button onClick={()=>supabase.auth.signOut()} style={{width:'100%',background:'none',border:'none',color:MUTED,fontWeight:600,fontSize:13,cursor:'pointer'}}>Sair</button>
+    </div>
+  </div>
+}
+if(user?.id&&gpsStatus==='checking'){
+  return<div style={{minHeight:'100vh',background:'#1e293b',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Inter',system-ui,sans-serif"}}>
+    <div style={{color:'#fff',fontSize:14}}>⏳ Verificando localização...</div>
+  </div>
+}
 return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',system-ui,sans-serif",color:TEXT,paddingBottom:72}}>
 <div style={{background:'#1e293b',borderBottom:`1px solid ${BORDER}`,padding:'0 16px',position:'sticky',top:0,zIndex:100}}>
 <div style={{display:'flex',alignItems:'center',gap:8,height:52}}>
