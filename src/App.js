@@ -15,15 +15,6 @@ const getGpsLocation=()=>new Promise(resolve=>{
     {timeout:5000,maximumAge:60000}
   )
 })
-const checkGpsPermission=()=>{
-  if(!navigator.geolocation){setGpsStatus('denied');return}
-  setGpsStatus('checking')
-  navigator.geolocation.getCurrentPosition(
-    ()=>setGpsStatus('granted'),
-    ()=>setGpsStatus('denied'),
-    {timeout:8000,maximumAge:0}
-  )
-}
 const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
 const ADMIN_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/admin-api'
 const ADMIN_ID='7ad867ea-496c-412c-8acd-5cc7c21eca0e'
@@ -114,6 +105,15 @@ const[relatorioClientes,setRelatorioClientes]=useState([])
 const[relatorioMeses,setRelatorioMeses]=useState([])
 const[relatorioIncluirInativos,setRelatorioIncluirInativos]=useState(false)
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
+const checkGpsPermission=()=>{
+  if(!navigator.geolocation){setGpsStatus('denied');return}
+  setGpsStatus('checking')
+  navigator.geolocation.getCurrentPosition(
+    ()=>setGpsStatus('granted'),
+    ()=>setGpsStatus('denied'),
+    {timeout:8000,maximumAge:0}
+  )
+}
 const loadClients=useCallback(async()=>{if(!user?.id)return;const{data:userCfg}=await supabase.from('user_config').select('rotas').eq('user_id',user.id).single();const rotasUser=userCfg?.rotas||[];const query=supabase.from('clients').select('*').order('route').order('ordem');const{data,error}=rotasUser.length>0?await query.overlaps('rotas',rotasUser):await query;if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data||[]);setRoutes([...new Set((data||[]).map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
 const loadOrders=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('orders').select('*').eq('user_id',user.id).eq('status','pendente').eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar pedidos.','error');return}setOrders(data||[])},[user?.id])
