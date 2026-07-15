@@ -8,11 +8,11 @@ const fmt=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
 const today=()=>new Date().toISOString().split('T')[0]
 const timeNow=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
 const getGpsLocation=()=>new Promise(resolve=>{
-  if(!navigator.geolocation){resolve(null);return}
+  if(!navigator.geolocation){console.log('Geolocalização não suportada');resolve(null);return}
   navigator.geolocation.getCurrentPosition(
-    pos=>resolve({lat:pos.coords.latitude,lng:pos.coords.longitude}),
-    ()=>resolve(null),
-    {timeout:5000,maximumAge:60000}
+    pos=>{console.log('GPS capturado:',pos.coords.latitude,pos.coords.longitude);resolve({lat:pos.coords.latitude,lng:pos.coords.longitude})},
+    err=>{console.log('Erro GPS:',err.code,err.message);resolve(null)},
+    {timeout:15000,maximumAge:60000}
   )
 })
 const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
