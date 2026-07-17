@@ -556,9 +556,16 @@ await handleSetDtEntrega(dt)
 <KpiCard label="Restantes" value={adminActiveRouteClients.length-adminSoldClientIds.size} sub={adminActiveRouteClients.length-adminSoldClientIds.size===0?'Concluído! 🎉':'a visitar'} color={adminActiveRouteClients.length-adminSoldClientIds.size===0?SUCCESS:WARNING}/>
 <KpiCard label="Total Vendido" value={fmt(adminTotalSold)} sub={`${adminSales.length} venda(s)`} color={ACCENT}/>
 </div>
-{adminTotalPendente>0&&<div style={{background:'#FFFBEB',border:`1px solid ${WARNING}33`,borderRadius:12,padding:'12px 14px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-<span style={{fontWeight:700,fontSize:13,color:WARNING}}>📋 Pedidos pendentes de exportação</span>
-<span style={{fontWeight:800,fontSize:15,color:WARNING}}>{fmt(adminTotalPendente)}</span>
+{adminOrders.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,color:WARNING}}>📋 Pedidos Pendentes ({adminOrders.length}) — {fmt(adminTotalPendente)}</div>
+{adminOrders.map((o,i)=><div key={o.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{o.client_name}</div>
+<div style={{fontSize:11,color:MUTED}}>{o.situacao}{adminVendorNames[o.user_id]?' • '+adminVendorNames[o.user_id]:''}</div>
+</div>
+{o.gps_lat&&o.gps_lng&&<a href={`https://www.google.com/maps?q=${o.gps_lat},${o.gps_lng}`} target="_blank" rel="noopener noreferrer" style={{fontSize:16,textDecoration:'none'}} title="Ver localização">📍</a>}
+<Badge color={WARNING}>{fmt(o.total)}</Badge>
+</div>)}
 </div>}
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
 <div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
