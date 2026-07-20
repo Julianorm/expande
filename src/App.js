@@ -442,7 +442,24 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 </>:null}
 <div style={{display:'flex',gap:8,marginTop:16}}>
 <button onClick={()=>setClientePerfil(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Fechar</button>
+<button onClick={()=>setModalNaoComprou(true)} style={{flex:1,background:'#FEF2F2',color:DANGER,border:`1px solid ${DANGER}33`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>❌ Não comprou</button>
 <button onClick={()=>{setPedidoCliente(clientePerfil);setClientePerfil(null);setActiveTab('pedido')}} style={{flex:2,background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>🛒 Fazer Pedido</button>
+</div>
+</div>
+</div>}
+{modalNaoComprou&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:700,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+<div style={{background:CARD,borderRadius:16,padding:20,width:'100%',maxWidth:360}}>
+<div style={{fontWeight:800,fontSize:16,marginBottom:4}}>❌ Cliente não comprou</div>
+<div style={{fontSize:13,color:MUTED,marginBottom:16}}>{clientePerfil?.name}</div>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:6}}>MOTIVO</label>
+{['Cliente fechado / não atendeu','Cliente ausente','Sem interesse no momento','Já tem estoque suficiente','Cliente devendo','Pediu para retornar depois','Outro'].map(m=>
+<button key={m} onClick={()=>setMotivoNaoComprou(m)} style={{width:'100%',textAlign:'left',background:motivoNaoComprou===m?ACCENT_LIGHT:SURFACE,border:`1px solid ${motivoNaoComprou===m?ACCENT:BORDER}`,borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:13,fontWeight:600,color:motivoNaoComprou===m?ACCENT:TEXT,cursor:'pointer'}}>{m}</button>
+)}
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:6,marginTop:8}}>OBSERVAÇÃO (opcional)</label>
+<textarea value={obsNaoComprou} onChange={e=>setObsNaoComprou(e.target.value)} rows={3} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box',marginBottom:16,fontFamily:'inherit',resize:'none'}}/>
+<div style={{display:'flex',gap:8}}>
+<button onClick={()=>{setModalNaoComprou(false);setMotivoNaoComprou('');setObsNaoComprou('')}} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Cancelar</button>
+<button onClick={salvarNaoComprou} disabled={salvandoNaoComprou} style={{flex:2,background:salvandoNaoComprou?MUTED:DANGER,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:salvandoNaoComprou?'not-allowed':'pointer'}}>{salvandoNaoComprou?'Salvando…':'Registrar'}</button>
 </div>
 </div>
 </div>}
