@@ -347,10 +347,11 @@ const relatorioTotaisPorMes=useMemo(()=>{
 },[relatorioClientes,relatorioMeses])
 const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
 const gerarRelatorioTrocas=async()=>{
-  if(!trocaRoute||!trocaInicio||!trocaFim){showToast('Selecione rota e período.','error');return}
+  const rotaUsar=user?.id===ADMIN_ID?trocaRoute:(routes[0]||'')
+  if(!rotaUsar||!trocaInicio||!trocaFim){showToast('Selecione período.','error');return}
   setTrocaLoading(true)
   try{
-    const{data:salesData,error:salesErr}=await supabase.from('sales').select('id,note,client_name').eq('route',trocaRoute).gte('date',trocaInicio).lte('date',trocaFim)
+    const{data:salesData,error:salesErr}=await supabase.from('sales').select('id,note,client_name').eq('route',rotaUsar).gte('date',trocaInicio).lte('date',trocaFim)
     if(salesErr){showToast('Erro ao carregar vendas.','error');setTrocaLoading(false);return}
     const salesIds=(salesData||[]).map(s=>s.id)
     if(salesIds.length===0){setTrocaResultado([]);setTrocaLoading(false);return}
