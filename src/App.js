@@ -109,6 +109,15 @@ const[relatorioLoading,setRelatorioLoading]=useState(false)
 const[relatorioClientes,setRelatorioClientes]=useState([])
 const[relatorioMeses,setRelatorioMeses]=useState([])
 const[relatorioIncluirInativos,setRelatorioIncluirInativos]=useState(false)
+const[relatorioTipo,setRelatorioTipo]=useState('compras')
+const[trocaRoute,setTrocaRoute]=useState('')
+const[trocaInicio,setTrocaInicio]=useState('')
+const[trocaFim,setTrocaFim]=useState('')
+const[trocaProdutoFiltro,setTrocaProdutoFiltro]=useState('')
+const[trocaClienteFiltro,setTrocaClienteFiltro]=useState('')
+const[trocaAgrupamento,setTrocaAgrupamento]=useState('produto')
+const[trocaLoading,setTrocaLoading]=useState(false)
+const[trocaResultado,setTrocaResultado]=useState([])
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const checkGpsPermission=()=>{
   if(!navigator.geolocation){setGpsStatus('denied');return}
