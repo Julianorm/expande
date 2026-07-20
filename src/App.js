@@ -346,6 +346,41 @@ const relatorioTotaisPorMes=useMemo(()=>{
   return totais
 },[relatorioClientes,relatorioMeses])
 const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
+const gerarRelatorioTrocas=async()=>{
+  if(!trocaRoute||!trocaInicio||!trocaFim){showToast('Selecione rota e período.','error');return}
+  setTrocaLoading(true)
+  try{
+    const{data:salesData,error:salesErr}=await supabase.from('sales').select('id,note,client_name').eq('route',trocaRoute).gte('date',trocaInicio).lte('date',trocaFim)
+    if(salesErr){showToast('Erro ao carregar vendas.','error');setTrocaLoading(false);return}
+    const salesIds=(salesData||[]).map(s=>s.id)
+    if(salesIds.length===0){setTrocaResultado([]);setTrocaLoading(false);return}
+    const salesById={}
+    ;(salesData||[]).forEach(s=>{salesById[s.id]=s})
+    const{data:itemsData,error:itemsErr}=await supabase.from('sales_items').select('*').in('sale_id',salesIds)
+    if(itemsErr){showToast('Erro ao carregar itens.','error');setTrocaLoading(false);return}
+    const grupos={}
+    ;(itemsData||[]).forEach(item=>{
+      const venda=salesById[item.sale_id]
+      if(!venda)return
+      if(venda.note==='Bonificação')return
+      if(trocaProdutoFiltro&&!item.descricao?.toLowerCase().includes(trocaProdutoFiltro.toLowerCase()))return
+      if(trocaClienteFiltro&&!venda.client_name?.toLowerCase().includes(trocaClienteFiltro.toLowerCase()))return
+      const chave=trocaAgrupamento==='produto'?item.descricao:venda.client_name
+      if(!grupos[chave])grupos[chave]={nome:chave,qtdNormal:0,qtdTroca:0}
+      if(venda.note==='Troca'){grupos[chave].qtdTroca+=item.quant}
+      else{grupos[chave].qtdNormal+=item.quant}
+    })
+    const resultado=Object.values(grupos).map(g=>({
+      ...g,
+      percentual:g.qtdNormal>0?(g.qtdTroca/g.qtdNormal*100):(g.qtdTroca>0?100:0)
+    })).sort((a,b)=>b.percentual-a.percentual)
+    setTrocaResultado(resultado)
+  }catch(err){
+    showToast('Erro inesperado ao gerar relatório.','error')
+    console.error(err)
+  }
+  setTrocaLoading(false)
+}
 const adminActiveRouteClients=useMemo(()=>selectedRoute?clients.filter(c=>(c.rotas||[c.route]).includes(selectedRoute)&&!c.inactive):[],[clients,selectedRoute])
 const adminSoldClientIds=useMemo(()=>new Set(adminSales.map(s=>s.client_id).filter(Boolean)),[adminSales])
 const adminTotalSold=useMemo(()=>adminSales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0),[adminSales])
