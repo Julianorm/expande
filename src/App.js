@@ -621,7 +621,7 @@ await handleSetDtEntrega(dt)
 :adminActiveRouteClients.map((c,i)=>{
 const vendido=adminSoldClientIds.has(c.id)||adminOrders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
 const temPedido=adminOrders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
-return<div key={c.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,background:vendido?'#F0FDF4':'transparent'}}>
+return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,cursor:'pointer',background:vendido?'#F0FDF4':'transparent'}}>
 <div style={{width:28,height:28,borderRadius:99,background:temPedido?WARNING:vendido?SUCCESS:BORDER,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,flexShrink:0,color:'#fff',fontWeight:700}}>
 {temPedido?'📋':vendido?'✓':i+1}
 </div>
