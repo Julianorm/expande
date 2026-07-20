@@ -645,6 +645,17 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 </div>)}
 </div>}
+{adminVisitasSemVenda.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginTop:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,color:DANGER}}>❌ Visitas sem Venda ({adminVisitasSemVenda.length})</div>
+{[...adminVisitasSemVenda].reverse().map((v,i)=><div key={v.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{v.client_name}</div>
+<div style={{fontSize:11,color:MUTED}}>{v.visit_time} • {v.motivo}{adminVendorNames[v.user_id]?' • '+adminVendorNames[v.user_id]:''}</div>
+{v.observacao&&<div style={{fontSize:11,color:MUTED,fontStyle:'italic',marginTop:2}}>"{v.observacao}"</div>}
+</div>
+{v.gps_lat&&v.gps_lng&&<a href={`https://www.google.com/maps?q=${v.gps_lat},${v.gps_lng}`} target="_blank" rel="noopener noreferrer" style={{fontSize:16,textDecoration:'none'}} title="Ver localização">📍</a>}
+</div>)}
+</div>}
 </>}
 </>:<>
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
