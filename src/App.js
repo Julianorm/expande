@@ -349,6 +349,21 @@ const relatorioTotaisPorMes=useMemo(()=>{
   return totais
 },[relatorioClientes,relatorioMeses])
 const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
+const trocaPercentualMedio=useMemo(()=>{
+  if(trocaResultado.length===0)return 0
+  const totalNormal=trocaResultado.reduce((a,r)=>a+r.qtdNormal,0)
+  const totalTroca=trocaResultado.reduce((a,r)=>a+r.qtdTroca,0)
+  return totalNormal>0?(totalTroca/totalNormal*100):0
+},[trocaResultado])
+const exportarTrocasExcel=()=>{
+  const header=[trocaAgrupamento==='produto'?'Produto':'Cliente','Qtd Vendida','Qtd Trocada','% Troca']
+  const rows=trocaResultado.map(r=>[r.nome,r.qtdNormal,r.qtdTroca,r.percentual.toFixed(1)+'%'])
+  rows.push(['MÉDIA GERAL','','',trocaPercentualMedio.toFixed(1)+'%'])
+  const ws=XLSX.utils.aoa_to_sheet([header,...rows])
+  const wb=XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb,ws,'Trocas')
+  XLSX.writeFile(wb,`Trocas_${trocaRoute||'todas_rotas'}_${trocaInicio}_a_${trocaFim}.xlsx`)
+}
 const carregarTrocaVendedores=async()=>{
   const{data}=await supabase.from('user_config').select('user_id,name').order('name')
   setTrocaVendedoresList((data||[]).filter(v=>v.name))
@@ -357,8 +372,10 @@ const gerarRelatorioTrocas=async()=>{
   if(!trocaInicio||!trocaFim){showToast('Selecione período.','error');return}
   setTrocaLoading(true)
   try{
-    const query=supabase.from('sales').select('id,note,client_name').gte('date',trocaInicio).lte('date',trocaFim)
-    const{data:salesData,error:salesErr}=trocaRoute?await query.eq('route',trocaRoute):await query.in('route',routes)
+    let query=supabase.from('sales').select('id,note,client_name').gte('date',trocaInicio).lte('date',trocaFim)
+    query=trocaRoute?query.eq('route',trocaRoute):query.in('route',routes)
+    if(trocaVendedorFiltro)query=query.eq('user_id',trocaVendedorFiltro)
+    const{data:salesData,error:salesErr}=await query
     if(salesErr){showToast('Erro ao carregar vendas.','error');setTrocaLoading(false);return}
     const salesIds=(salesData||[]).map(s=>s.id)
     if(salesIds.length===0){setTrocaResultado([]);setTrocaLoading(false);return}
