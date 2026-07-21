@@ -1031,6 +1031,10 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <option value="">{user?.id===ADMIN_ID?'Todas as rotas':'Todas as minhas rotas'}</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
+{user?.id===ADMIN_ID&&<select value={trocaVendedorFiltro} onChange={e=>setTrocaVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">Todos os vendedores</option>
+{trocaVendedoresList.map(v=><option key={v.user_id} value={v.user_id}>{v.name}</option>)}
+</select>}
 <div style={{display:'flex',gap:8,marginBottom:8}}>
 <div style={{flex:1}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
@@ -1051,7 +1055,14 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <button onClick={gerarRelatorioTrocas} disabled={trocaLoading} style={{width:'100%',background:trocaLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:trocaLoading?'not-allowed':'pointer'}}>
 {trocaLoading?'Gerando…':'📊 Gerar Relatório'}
 </button>
+{trocaResultado.length>0&&<button onClick={exportarTrocasExcel} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer',marginTop:8}}>
+📥 Exportar para Excel
+</button>}
 </div>
+{trocaResultado.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'12px 16px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span style={{fontWeight:700,fontSize:13}}>Percentual médio de troca</span>
+<span style={{fontWeight:800,fontSize:18,color:trocaPercentualMedio>=10?DANGER:trocaPercentualMedio>0?WARNING:SUCCESS}}>{trocaPercentualMedio.toFixed(1)}%</span>
+</div>}
 {trocaResultado.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'auto'}}>
 <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
 <thead>
