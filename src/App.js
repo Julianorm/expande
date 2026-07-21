@@ -121,6 +121,14 @@ const[trocaResultado,setTrocaResultado]=useState([])
 const[trocaVendedorFiltro,setTrocaVendedorFiltro]=useState('')
 const[trocaVendedoresList,setTrocaVendedoresList]=useState([])
 const[trocaSoProprio,setTrocaSoProprio]=useState(false)
+const[ticketRoute,setTicketRoute]=useState('')
+const[ticketInicio,setTicketInicio]=useState('')
+const[ticketFim,setTicketFim]=useState('')
+const[ticketVendedorFiltro,setTicketVendedorFiltro]=useState('')
+const[ticketClienteFiltro,setTicketClienteFiltro]=useState('')
+const[ticketSoProprio,setTicketSoProprio]=useState(false)
+const[ticketLoading,setTicketLoading]=useState(false)
+const[ticketResultado,setTicketResultado]=useState(null)
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const checkGpsPermission=()=>{
   if(!navigator.geolocation){setGpsStatus('denied');return}
@@ -364,6 +372,63 @@ const exportarTrocasExcel=()=>{
   const wb=XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb,ws,'Trocas')
   XLSX.writeFile(wb,`Trocas_${trocaRoute||'todas_rotas'}_${trocaInicio}_a_${trocaFim}.xlsx`)
+}
+const gerarTicketMedio=async()=>{
+  if(!ticketInicio||!ticketFim){showToast('Selecione período.','error');return}
+  setTicketLoading(true)
+  try{
+    let salesQuery=supabase.from('sales').select('id,client_id,client_name,value,note,user_id,route').gte('date',ticketInicio).lte('date',ticketFim)
+    salesQuery=ticketRoute?salesQuery.eq('route',ticketRoute):salesQuery.in('route',routes)
+    if(ticketVendedorFiltro)salesQuery=salesQuery.eq('user_id',ticketVendedorFiltro)
+    if(ticketClienteFiltro)salesQuery=salesQuery.ilike('client_name',`%${ticketClienteFiltro}%`)
+    const{data:salesData,error:salesErr}=await salesQuery
+    if(salesErr){showToast('Erro ao carregar vendas.','error');setTicketLoading(false);return}
+
+    let visitasQuery=supabase.from('visitas_sem_venda').select('client_id,client_name,user_id,route').gte('date',ticketInicio).lte('date',ticketFim)
+    visitasQuery=ticketRoute?visitasQuery.eq('route',ticketRoute):visitasQuery.in('route',routes)
+    if(ticketVendedorFiltro)visitasQuery=visitasQuery.eq('user_id',ticketVendedorFiltro)
+    if(ticketClienteFiltro)visitasQuery=visitasQuery.ilike('client_name',`%${ticketClienteFiltro}%`)
+    const{data:visitasData}=await visitasQuery
+
+    const clientesInativos=new Set(clients.filter(c=>c.inactive).map(c=>c.id))
+
+    const atendidosSet=new Set()
+    ;(salesData||[]).forEach(s=>{if(s.client_id&&!clientesInativos.has(s.client_id))atendidosSet.add(s.client_id)})
+    ;(visitasData||[]).forEach(v=>{if(v.client_id&&!clientesInativos.has(v.client_id))atendidosSet.add(v.client_id)})
+
+    const vendasValidas=(salesData||[]).filter(s=>!['Bonificação','Troca'].includes(s.note)&&(!s.client_id||!clientesInativos.has(s.client_id)))
+
+    let totalVendido=0
+    if(ticketSoProprio){
+      const saleIds=vendasValidas.map(s=>s.id)
+      if(saleIds.length>0){
+        const{data:produtosProprios}=await supabase.from('products').select('erp_code').filter('tags','cs','{"PROPRIO"}')
+        const propriosSet=new Set((produtosProprios||[]).map(p=>String(p.erp_code)))
+        const{data:itemsData}=await supabase.from('sales_items').select('sale_id,erp_code,total').in('sale_id',saleIds)
+        totalVendido=(itemsData||[]).filter(item=>propriosSet.has(String(item.erp_code))).reduce((a,item)=>a+item.total,0)
+      }
+    }else{
+      totalVendido=vendasValidas.reduce((a,s)=>a+s.value,0)
+    }
+
+    const numClientes=atendidosSet.size
+    const ticketMedio=numClientes>0?totalVendido/numClientes:0
+
+    setTicketResultado({totalVendido,numClientes,ticketMedio})
+  }catch(err){
+    showToast('Erro inesperado ao gerar relatório.','error')
+    console.error(err)
+  }
+  setTicketLoading(false)
+}
+const exportarTicketExcel=()=>{
+  if(!ticketResultado)return
+  const header=['Rota','Período','Total Vendido','Clientes Atendidos','Ticket Médio']
+  const row=[ticketRoute||'Todas',`${ticketInicio} a ${ticketFim}`,ticketResultado.totalVendido,ticketResultado.numClientes,ticketResultado.ticketMedio.toFixed(2)]
+  const ws=XLSX.utils.aoa_to_sheet([header,row])
+  const wb=XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb,ws,'Ticket Medio')
+  XLSX.writeFile(wb,`TicketMedio_${ticketRoute||'todas_rotas'}_${ticketInicio}_a_${ticketFim}.xlsx`)
 }
 const carregarTrocaVendedores=async()=>{
   const{data}=await supabase.from('user_config').select('user_id,name').order('name')
