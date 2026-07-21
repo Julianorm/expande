@@ -1160,7 +1160,56 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </tbody>
 </table>
 </div>}
-</>}
+</>:relatorioTipo==='ticket'?<>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🎯 Ticket Médio</div>
+<select value={ticketRoute} onChange={e=>setTicketRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">{user?.id===ADMIN_ID?'Todas as rotas':'Todas as minhas rotas'}</option>
+{routes.map(r=><option key={r} value={r}>{r}</option>)}
+</select>
+{user?.id===ADMIN_ID&&<select value={ticketVendedorFiltro} onChange={e=>setTicketVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">Todos os vendedores</option>
+{trocaVendedoresList.map(v=><option key={v.user_id} value={v.user_id}>{v.name}</option>)}
+</select>}
+<div style={{display:'flex',gap:8,marginBottom:8}}>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
+<input type="date" value={ticketInicio} onChange={e=>setTicketInicio(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>ATÉ</label>
+<input type="date" value={ticketFim} onChange={e=>setTicketFim(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+</div>
+<input type="text" placeholder="Filtrar por cliente (opcional)" value={ticketClienteFiltro} onChange={e=>setTicketClienteFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box',marginBottom:8}}/>
+<label style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,cursor:'pointer'}}>
+<input type="checkbox" checked={ticketSoProprio} onChange={e=>setTicketSoProprio(e.target.checked)} style={{width:16,height:16,cursor:'pointer'}}/>
+<span style={{fontSize:13,color:TEXT,fontWeight:600}}>Somente fabricação própria</span>
+</label>
+<button onClick={gerarTicketMedio} disabled={ticketLoading} style={{width:'100%',background:ticketLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:ticketLoading?'not-allowed':'pointer'}}>
+{ticketLoading?'Calculando…':'📊 Calcular Ticket Médio'}
+</button>
+{ticketResultado&&<button onClick={exportarTicketExcel} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer',marginTop:8}}>
+📥 Exportar para Excel
+</button>}
+</div>
+{ticketResultado&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'20px 16px'}}>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+<div style={{background:SURFACE,borderRadius:10,padding:'12px',textAlign:'center'}}>
+<div style={{fontSize:20,fontWeight:800,color:TEXT}}>{fmt(ticketResultado.totalVendido)}</div>
+<div style={{fontSize:11,color:MUTED,fontWeight:600}}>TOTAL VENDIDO</div>
+</div>
+<div style={{background:SURFACE,borderRadius:10,padding:'12px',textAlign:'center'}}>
+<div style={{fontSize:20,fontWeight:800,color:TEXT}}>{ticketResultado.numClientes}</div>
+<div style={{fontSize:11,color:MUTED,fontWeight:600}}>CLIENTES ATENDIDOS</div>
+</div>
+</div>
+<div style={{background:ACCENT_LIGHT,borderRadius:10,padding:'16px',textAlign:'center'}}>
+<div style={{fontSize:28,fontWeight:800,color:ACCENT}}>{fmt(ticketResultado.ticketMedio)}</div>
+<div style={{fontSize:12,color:MUTED,fontWeight:600,marginTop:4}}>TICKET MÉDIO</div>
+</div>
+</div>}
+</>:null}
 </div>}
 {activeTab==='config'&&user?.id===ADMIN_ID&&<div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
