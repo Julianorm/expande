@@ -347,12 +347,11 @@ const relatorioTotaisPorMes=useMemo(()=>{
 },[relatorioClientes,relatorioMeses])
 const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
 const gerarRelatorioTrocas=async()=>{
-  if(user?.id===ADMIN_ID&&!trocaRoute){showToast('Selecione uma rota.','error');return}
   if(!trocaInicio||!trocaFim){showToast('Selecione período.','error');return}
   setTrocaLoading(true)
   try{
     const query=supabase.from('sales').select('id,note,client_name').gte('date',trocaInicio).lte('date',trocaFim)
-    const{data:salesData,error:salesErr}=user?.id===ADMIN_ID?await query.eq('route',trocaRoute):await query.in('route',routes)
+    const{data:salesData,error:salesErr}=trocaRoute?await query.eq('route',trocaRoute):await query.in('route',routes)
     if(salesErr){showToast('Erro ao carregar vendas.','error');setTrocaLoading(false);return}
     const salesIds=(salesData||[]).map(s=>s.id)
     if(salesIds.length===0){setTrocaResultado([]);setTrocaLoading(false);return}
@@ -1004,10 +1003,10 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </>:<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🔄 Relatório de Trocas</div>
-{user?.id===ADMIN_ID&&<select value={trocaRoute} onChange={e=>setTrocaRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option value="">Selecionar rota…</option>
+<select value={trocaRoute} onChange={e=>setTrocaRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">{user?.id===ADMIN_ID?'Todas as rotas':'Todas as minhas rotas'}</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
-</select>}
+</select>
 <div style={{display:'flex',gap:8,marginBottom:8}}>
 <div style={{flex:1}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
