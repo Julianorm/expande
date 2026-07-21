@@ -120,6 +120,7 @@ const[trocaLoading,setTrocaLoading]=useState(false)
 const[trocaResultado,setTrocaResultado]=useState([])
 const[trocaVendedorFiltro,setTrocaVendedorFiltro]=useState('')
 const[trocaVendedoresList,setTrocaVendedoresList]=useState([])
+const[trocaSoProprio,setTrocaSoProprio]=useState(false)
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const checkGpsPermission=()=>{
   if(!navigator.geolocation){setGpsStatus('denied');return}
@@ -381,13 +382,19 @@ const gerarRelatorioTrocas=async()=>{
     if(salesIds.length===0){setTrocaResultado([]);setTrocaLoading(false);return}
     const salesById={}
     ;(salesData||[]).forEach(s=>{salesById[s.id]=s})
-    const{data:itemsData,error:itemsErr}=await supabase.from('sales_items').select('*').in('sale_id',salesIds)
+   const{data:itemsData,error:itemsErr}=await supabase.from('sales_items').select('*').in('sale_id',salesIds)
     if(itemsErr){showToast('Erro ao carregar itens.','error');setTrocaLoading(false);return}
+    let propriosSet=null
+    if(trocaSoProprio){
+      const{data:produtosProprios}=await supabase.from('products').select('erp_code').filter('tags','cs','{"PROPRIO"}')
+      propriosSet=new Set((produtosProprios||[]).map(p=>String(p.erp_code)))
+    }
     const grupos={}
-    ;(itemsData||[]).forEach(item=>{
+   ;(itemsData||[]).forEach(item=>{
       const venda=salesById[item.sale_id]
       if(!venda)return
       if(venda.note==='Bonificação')return
+      if(propriosSet&&!propriosSet.has(String(item.erp_code)))return
       if(trocaProdutoFiltro&&!item.descricao?.toLowerCase().includes(trocaProdutoFiltro.toLowerCase()))return
       if(trocaClienteFiltro&&!venda.client_name?.toLowerCase().includes(trocaClienteFiltro.toLowerCase()))return
       const chave=trocaAgrupamento==='produto'?item.descricao:venda.client_name
