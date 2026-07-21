@@ -1054,6 +1054,10 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>
 <input type="text" placeholder="Filtrar por produto (opcional)" value={trocaProdutoFiltro} onChange={e=>setTrocaProdutoFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box',marginBottom:8}}/>
 <input type="text" placeholder="Filtrar por cliente (opcional)" value={trocaClienteFiltro} onChange={e=>setTrocaClienteFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box',marginBottom:8}}/>
+<label style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,cursor:'pointer'}}>
+<input type="checkbox" checked={trocaSoProprio} onChange={e=>setTrocaSoProprio(e.target.checked)} style={{width:16,height:16,cursor:'pointer'}}/>
+<span style={{fontSize:13,color:TEXT,fontWeight:600}}>Somente fabricação própria</span>
+</label>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>AGRUPAR POR</label>
 <div style={{display:'flex',gap:8,marginBottom:12}}>
 <button onClick={()=>setTrocaAgrupamento('produto')} style={{flex:1,background:trocaAgrupamento==='produto'?ACCENT:SURFACE,color:trocaAgrupamento==='produto'?'#fff':MUTED,border:`1px solid ${trocaAgrupamento==='produto'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:13,cursor:'pointer'}}>Produto</button>
