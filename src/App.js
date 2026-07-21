@@ -118,6 +118,8 @@ const[trocaClienteFiltro,setTrocaClienteFiltro]=useState('')
 const[trocaAgrupamento,setTrocaAgrupamento]=useState('produto')
 const[trocaLoading,setTrocaLoading]=useState(false)
 const[trocaResultado,setTrocaResultado]=useState([])
+const[trocaVendedorFiltro,setTrocaVendedorFiltro]=useState('')
+const[trocaVendedoresList,setTrocaVendedoresList]=useState([])
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const checkGpsPermission=()=>{
   if(!navigator.geolocation){setGpsStatus('denied');return}
@@ -157,6 +159,7 @@ setAdminVisitasSemVenda(visitasData||[])
 },[user?.id])
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
 useEffect(()=>{if(user?.id){checkGpsPermission()}},[user?.id])
+useEffect(()=>{if(user?.id===ADMIN_ID&&activeTab==='relatorio'&&trocaVendedoresList.length===0){carregarTrocaVendedores()}},[user?.id,activeTab])
 useEffect(()=>{loadGoal(selectedRoute)},[selectedRoute,loadGoal])
 useEffect(()=>{
   if(user?.id===ADMIN_ID&&selectedRoute){
@@ -346,6 +349,10 @@ const relatorioTotaisPorMes=useMemo(()=>{
   return totais
 },[relatorioClientes,relatorioMeses])
 const relatorioTotalGeral=useMemo(()=>relatorioClientes.reduce((a,c)=>a+c.total,0),[relatorioClientes])
+const carregarTrocaVendedores=async()=>{
+  const{data}=await supabase.from('user_config').select('user_id,name').order('name')
+  setTrocaVendedoresList((data||[]).filter(v=>v.name))
+}
 const gerarRelatorioTrocas=async()=>{
   if(!trocaInicio||!trocaFim){showToast('Selecione período.','error');return}
   setTrocaLoading(true)
