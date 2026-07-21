@@ -945,8 +945,11 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </>}
 </div>}
 {activeTab==='relatorio'&&<div>
-{user?.id!==ADMIN_ID?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>📈</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Em construção</div></div>
-:<>
+{user?.id===ADMIN_ID&&<div style={{display:'flex',gap:8,marginBottom:12}}>
+<button onClick={()=>setRelatorioTipo('compras')} style={{flex:1,background:relatorioTipo==='compras'?ACCENT:SURFACE,color:relatorioTipo==='compras'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='compras'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:13,cursor:'pointer'}}>Compras por Rota</button>
+<button onClick={()=>setRelatorioTipo('trocas')} style={{flex:1,background:relatorioTipo==='trocas'?ACCENT:SURFACE,color:relatorioTipo==='trocas'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='trocas'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:13,cursor:'pointer'}}>Trocas de Produtos</button>
+</div>}
+{(user?.id===ADMIN_ID?relatorioTipo:'trocas')==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Compras por Rota</div>
 <select value={relatorioRoute} onChange={e=>setRelatorioRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
@@ -994,6 +997,54 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 {relatorioMeses.map(m=><td key={m} style={{padding:'8px 10px',textAlign:'right',fontWeight:700}}>{fmt(relatorioTotaisPorMes[m]||0)}</td>)}
 <td style={{padding:'8px 10px',textAlign:'right',fontWeight:800}}>{fmt(relatorioTotalGeral)}</td>
 </tr>
+</tbody>
+</table>
+</div>}
+</>:<>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🔄 Relatório de Trocas</div>
+{user?.id===ADMIN_ID&&<select value={trocaRoute} onChange={e=>setTrocaRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">Selecionar rota…</option>
+{routes.map(r=><option key={r} value={r}>{r}</option>)}
+</select>}
+<div style={{display:'flex',gap:8,marginBottom:8}}>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
+<input type="date" value={trocaInicio} onChange={e=>setTrocaInicio(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>ATÉ</label>
+<input type="date" value={trocaFim} onChange={e=>setTrocaFim(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+</div>
+<input type="text" placeholder="Filtrar por produto (opcional)" value={trocaProdutoFiltro} onChange={e=>setTrocaProdutoFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box',marginBottom:8}}/>
+<input type="text" placeholder="Filtrar por cliente (opcional)" value={trocaClienteFiltro} onChange={e=>setTrocaClienteFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box',marginBottom:8}}/>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>AGRUPAR POR</label>
+<div style={{display:'flex',gap:8,marginBottom:12}}>
+<button onClick={()=>setTrocaAgrupamento('produto')} style={{flex:1,background:trocaAgrupamento==='produto'?ACCENT:SURFACE,color:trocaAgrupamento==='produto'?'#fff':MUTED,border:`1px solid ${trocaAgrupamento==='produto'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:13,cursor:'pointer'}}>Produto</button>
+<button onClick={()=>setTrocaAgrupamento('cliente')} style={{flex:1,background:trocaAgrupamento==='cliente'?ACCENT:SURFACE,color:trocaAgrupamento==='cliente'?'#fff':MUTED,border:`1px solid ${trocaAgrupamento==='cliente'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:13,cursor:'pointer'}}>Cliente</button>
+</div>
+<button onClick={gerarRelatorioTrocas} disabled={trocaLoading} style={{width:'100%',background:trocaLoading?MUTED:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:trocaLoading?'not-allowed':'pointer'}}>
+{trocaLoading?'Gerando…':'📊 Gerar Relatório'}
+</button>
+</div>
+{trocaResultado.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'auto'}}>
+<table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+<thead>
+<tr style={{background:SURFACE,borderBottom:`2px solid ${BORDER}`}}>
+<th style={{padding:'8px 10px',textAlign:'left'}}>{trocaAgrupamento==='produto'?'Produto':'Cliente'}</th>
+<th style={{padding:'8px 10px',textAlign:'right'}}>Qtd Vendida</th>
+<th style={{padding:'8px 10px',textAlign:'right'}}>Qtd Trocada</th>
+<th style={{padding:'8px 10px',textAlign:'right',fontWeight:800}}>% Troca</th>
+</tr>
+</thead>
+<tbody>
+{trocaResultado.map((r,i)=><tr key={r.nome} style={{borderBottom:`1px solid ${BORDER}`,background:r.percentual>=10?'#FEF2F2':i%2===0?CARD:SURFACE}}>
+<td style={{padding:'8px 10px',fontWeight:600}}>{r.nome}</td>
+<td style={{padding:'8px 10px',textAlign:'right'}}>{r.qtdNormal}</td>
+<td style={{padding:'8px 10px',textAlign:'right',color:r.qtdTroca>0?DANGER:MUTED}}>{r.qtdTroca}</td>
+<td style={{padding:'8px 10px',textAlign:'right',fontWeight:800,color:r.percentual>=10?DANGER:r.percentual>0?WARNING:SUCCESS}}>{r.percentual.toFixed(1)}%</td>
+</tr>)}
 </tbody>
 </table>
 </div>}
