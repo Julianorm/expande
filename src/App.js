@@ -129,6 +129,9 @@ const[ticketClienteFiltro,setTicketClienteFiltro]=useState('')
 const[ticketSoProprio,setTicketSoProprio]=useState(false)
 const[ticketLoading,setTicketLoading]=useState(false)
 const[ticketResultado,setTicketResultado]=useState(null)
+const[syncInicio,setSyncInicio]=useState('')
+const[syncFim,setSyncFim]=useState('')
+const[syncLoading,setSyncLoading]=useState(false)
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const checkGpsPermission=()=>{
   if(!navigator.geolocation){setGpsStatus('denied');return}
