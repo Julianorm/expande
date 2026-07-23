@@ -445,6 +445,26 @@ const carregarTrocaVendedores=async()=>{
   const{data}=await supabase.from('user_config').select('user_id,name').order('name')
   setTrocaVendedoresList((data||[]).filter(v=>v.name))
 }
+const sincronizarVendas=async(dataInicio,dataFim)=>{
+  const{data:vendasParaSincronizar}=await supabase.from('sales').select('id,erp_code,value').gte('date',dataInicio).lte('date',dataFim).not('erp_code','is',null)
+  if(!vendasParaSincronizar||vendasParaSincronizar.length===0)return{atualizadas:0,total:0}
+  let atualizadas=0
+  for(const venda of vendasParaSincronizar){
+    try{
+      const res=await fetch(`${EGESTOR_API}?action=buscar_venda&codVenda=${venda.erp_code}`)
+      const data=await res.json()
+      console.log('Venda eGestor',venda.erp_code,':',JSON.stringify(data))
+      const novoValor=data?.valorTotal??data?.total??data?.financeiros?.[0]?.valor??null
+      if(novoValor!==null&&Math.abs(novoValor-venda.value)>0.01){
+        await supabase.from('sales').update({value:novoValor}).eq('id',venda.id)
+        atualizadas++
+      }
+    }catch(err){
+      console.log('Erro ao sincronizar venda',venda.erp_code,err)
+    }
+  }
+  return{atualizadas,total:vendasParaSincronizar.length}
+}
 const gerarRelatorioTrocas=async()=>{
   if(!trocaInicio||!trocaFim){showToast('Selecione período.','error');return}
   setTrocaLoading(true)
