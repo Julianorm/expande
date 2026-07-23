@@ -168,6 +168,17 @@ setAdminVisitasSemVenda(visitasData||[])
 },[user?.id])
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
 useEffect(()=>{if(user?.id){checkGpsPermission()}},[user?.id])
+useEffect(()=>{
+  if(!user?.id)return
+  const ultimaSync=localStorage.getItem('lastSalesSync')
+  const agora=Date.now()
+  if(ultimaSync&&(agora-parseInt(ultimaSync))<24*60*60*1000)return
+  const dataFim=today()
+  const dataInicio=new Date(Date.now()-3*86400000).toISOString().split('T')[0]
+  sincronizarVendas(dataInicio,dataFim).then(()=>{
+    localStorage.setItem('lastSalesSync',String(agora))
+  })
+},[user?.id])
 useEffect(()=>{if(user?.id===ADMIN_ID&&activeTab==='relatorio'&&trocaVendedoresList.length===0){carregarTrocaVendedores()}},[user?.id,activeTab])
 useEffect(()=>{loadGoal(selectedRoute)},[selectedRoute,loadGoal])
 useEffect(()=>{
