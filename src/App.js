@@ -1249,7 +1249,7 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>}
 </div>)}
 </div>}
-<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px'}}>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,padding:'14px 16px'}}>
 <div style={{fontWeight:700,fontSize:13,marginBottom:8}}>🔄 Sincronizar Produtos</div>
 <div style={{fontSize:12,color:MUTED,marginBottom:12}}>Atualiza todos os produtos do eGestor no CRM.</div>
 <button onClick={async()=>{setConfigLoading(true);try{await fetch('https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/sync-produtos');showToast('Produtos sincronizados!')}catch{showToast('Erro ao sincronizar','error')}setConfigLoading(false)}} disabled={configLoading} style={{width:'100%',background:WARNING,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>
@@ -1260,4 +1260,3 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>
 </div>)
 } 
-
