@@ -1046,7 +1046,9 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <button onClick={()=>setRelatorioTipo('trocas')} style={{flex:1,background:relatorioTipo==='trocas'?ACCENT:SURFACE,color:relatorioTipo==='trocas'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='trocas'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Trocas</button>
 <button onClick={()=>setRelatorioTipo('ticket')} style={{flex:1,background:relatorioTipo==='ticket'?ACCENT:SURFACE,color:relatorioTipo==='ticket'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='ticket'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Ticket Médio</button>
 </div>
-{(user?.id===ADMIN_ID?relatorioTipo:(relatorioTipo==='compras'?'trocas':relatorioTipo))==='compras'?<>
+{(()=>{
+const view=user?.id===ADMIN_ID?relatorioTipo:(relatorioTipo==='compras'?'trocas':relatorioTipo)
+return view==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Compras por Rota</div>
 <select value={relatorioRoute} onChange={e=>setRelatorioRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
@@ -1098,6 +1100,7 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </table>
 </div>}
 </>:<>
+{view!=='ticket'&&<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🔄 Relatório de Trocas</div>
 <select value={trocaRoute} onChange={e=>setTrocaRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
@@ -1160,7 +1163,8 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </tbody>
 </table>
 </div>}
-</>:relatorioTipo==='ticket'?<>
+</>}
+{view==='ticket'&&<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🎯 Ticket Médio</div>
 <select value={ticketRoute} onChange={e=>setTicketRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
@@ -1209,7 +1213,9 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 <div style={{fontSize:12,color:MUTED,fontWeight:600,marginTop:4}}>TICKET MÉDIO</div>
 </div>
 </div>}
-</>:null}
+</>}
+</>
+})()}
 </div>}
 {activeTab==='config'&&user?.id===ADMIN_ID&&<div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
