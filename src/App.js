@@ -1273,6 +1273,29 @@ return view==='compras'?<>
 📦 Sincronizar Produtos
 </button>
 </div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,padding:'14px 16px',marginTop:12}}>
+<div style={{fontWeight:700,fontSize:13,marginBottom:8}}>🔄 Sincronizar Vendas com eGestor</div>
+<div style={{fontSize:12,color:MUTED,marginBottom:12}}>Corrige valores de vendas editadas diretamente no eGestor pelo financeiro.</div>
+<div style={{display:'flex',gap:8,marginBottom:12}}>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
+<input type="date" value={syncInicio} onChange={e=>setSyncInicio(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+<div style={{flex:1}}>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>ATÉ</label>
+<input type="date" value={syncFim} onChange={e=>setSyncFim(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:13,boxSizing:'border-box'}}/>
+</div>
+</div>
+<button onClick={async()=>{
+  if(!syncInicio||!syncFim){showToast('Selecione o período.','error');return}
+  setSyncLoading(true)
+  const{atualizadas,total}=await sincronizarVendas(syncInicio,syncFim)
+  setSyncLoading(false)
+  showToast(`${atualizadas} de ${total} venda(s) atualizada(s)!`)
+}} disabled={syncLoading} style={{width:'100%',background:syncLoading?MUTED:WARNING,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:syncLoading?'not-allowed':'pointer'}}>
+{syncLoading?'Sincronizando…':'🔄 Sincronizar Vendas'}
+</button>
+</div>
 </div>}
 </div>
 </div>)
