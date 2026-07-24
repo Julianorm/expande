@@ -1325,3 +1325,4 @@ return view==='compras'?<>
 </div>
 </div>)
 } 
+
