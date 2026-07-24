@@ -302,12 +302,14 @@ const exportarPedidos=async()=>{if(exportingRef.current){return}exportingRef.cur
 const abrirEdicaoOrder=async(order)=>{setEditandoOrder(order);setEditOrderProdutos(order.produtos||[]);setEditOrderFormaPgto(String(order.forma_pgto||'1'));setEditOrderSituacao(order.situacao||'Pedido S/ NFe')}
 const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===0){showToast('Adicione ao menos um produto','error');return}const total=editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0);const{error}=await supabase.from('orders').update({produtos:editOrderProdutos,forma_pgto:parseInt(editOrderFormaPgto),situacao:editOrderSituacao,total}).eq('id',editandoOrder.id);if(error){showToast('Erro ao salvar','error');return}showToast('Pedido atualizado!');setEditandoOrder(null);await loadOrders()}
 const gerarRelatorio=async()=>{
-  if(!relatorioRoute||!relatorioInicio||!relatorioFim){showToast('Selecione rota e período.','error');return}
+  if(!relatorioInicio||!relatorioFim){showToast('Selecione o período.','error');return}
   setRelatorioLoading(true)
   try{
-    const{data:salesData,error}=await supabase.from('sales').select('*').eq('route',relatorioRoute).gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
+    let query=supabase.from('sales').select('*').gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
+    query=relatorioRoute?query.eq('route',relatorioRoute):query.in('route',routes)
+    const{data:salesData,error}=await query
     if(error){showToast('Erro ao carregar relatório: '+error.message,'error');setRelatorioLoading(false);return}
-    const routeClients=clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive))
+    const routeClients=relatorioRoute?clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive)):clients.filter(c=>relatorioIncluirInativos||!c.inactive)
     const meses=[]
     let d=new Date(relatorioInicio+'T12:00:00')
     const fimData=new Date(relatorioFim+'T12:00:00')
@@ -341,7 +343,7 @@ const exportarRelatorioExcel=()=>{
   const ws=XLSX.utils.aoa_to_sheet([header,...rows])
   const wb=XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb,ws,'Relatório')
-  XLSX.writeFile(wb,`Relatorio_${relatorioRoute.replace(/\s/g,'_')}_${relatorioInicio}_a_${relatorioFim}.xlsx`)
+  XLSX.writeFile(wb,`Relatorio_${relatorioRoute?relatorioRoute.replace(/\s/g,'_'):'todas_rotas'}_${relatorioInicio}_a_${relatorioFim}.xlsx`)
 }
 const buscarProdutos=async(search,setResultados)=>{if(search.length<2){setResultados([]);return}try{const res=await fetch(`${EGESTOR_API}?action=produtos&search=${encodeURIComponent(search)}`);const data=await res.json();const filtrado=(Array.isArray(data)?data:[]).filter(p=>p.descricao?.toLowerCase().includes(search.toLowerCase())||p.codigoProprio?.toLowerCase().includes(search.toLowerCase()));setResultados(filtrado)}catch(err){showToast('Erro ao buscar produtos','error')}}
 const addProduto=(produto,setProdutos,setSearch,setResultados)=>{setProdutoModal({produto,setProdutos,setSearch,setResultados});setProdutoModalQuant(1);setProdutoModalDesc(0);setSearch('');setResultados([])}
@@ -1086,7 +1088,7 @@ return view==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Compras por Rota</div>
 <select value={relatorioRoute} onChange={e=>setRelatorioRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option value="">Selecionar rota…</option>
+<option value="">Todas as rotas</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
 <div style={{display:'flex',gap:8,marginBottom:8}}>
