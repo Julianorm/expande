@@ -483,8 +483,14 @@ const gerarRelatorioTrocas=async()=>{
     if(salesIds.length===0){setTrocaResultado([]);setTrocaLoading(false);return}
     const salesById={}
     ;(salesData||[]).forEach(s=>{salesById[s.id]=s})
-   const{data:itemsData,error:itemsErr}=await supabase.from('sales_items').select('*').in('sale_id',salesIds)
-    if(itemsErr){showToast('Erro ao carregar itens.','error');setTrocaLoading(false);return}
+   const LOTE=200
+    let itemsData=[]
+    for(let i=0;i<salesIds.length;i+=LOTE){
+      const loteIds=salesIds.slice(i,i+LOTE)
+      const{data:loteItems,error:itemsErr}=await supabase.from('sales_items').select('*').in('sale_id',loteIds)
+      if(itemsErr){showToast('Erro ao carregar itens.','error');setTrocaLoading(false);return}
+      itemsData=itemsData.concat(loteItems||[])
+    }
     let propriosSet=null
     if(trocaSoProprio){
       const{data:produtosProprios}=await supabase.from('products').select('erp_code').filter('tags','cs','{"PROPRIO"}')
