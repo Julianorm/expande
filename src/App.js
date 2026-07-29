@@ -1301,6 +1301,30 @@ return view==='compras'?<>
 <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
 {['AFONSO CLAUDIO','BREJETUBA','DOMINGOS MARTINS','LARANJA DA TERRA','SANTA MARIA','SANTA TERESA','VENDA NOVA'].map(rota=>{const temRota=(u.config?.rotas||[]).includes(rota);return<button key={rota} onClick={async()=>{const novasRotas=temRota?(u.config?.rotas||[]).filter(r=>r!==rota):[...(u.config?.rotas||[]),rota];const{error}=await supabase.from('user_config').update({rotas:novasRotas}).eq('user_id',u.id);if(error){showToast('Erro: '+error.message,'error');return}showToast('Rota atualizada!');await carregarConfig()}} style={{background:temRota?ACCENT:SURFACE,color:temRota?'#fff':MUTED,border:`1px solid ${temRota?ACCENT:BORDER}`,borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer'}}>{rota}</button>})}</div>
 </div>}
+ {u.id!==ADMIN_ID&&<div style={{marginBottom:8}}>
+<div style={{fontSize:11,fontWeight:600,color:MUTED,marginBottom:6}}>PERFIL</div>
+<select value={['vendedor','admin'].includes(u.config?.perfil)?u.config?.perfil:(u.config?.perfil?'outro':'vendedor')} onChange={async(e)=>{
+  if(e.target.value==='outro')return
+  const{error}=await supabase.from('user_config').update({perfil:e.target.value}).eq('user_id',u.id)
+  if(error){showToast('Erro: '+error.message,'error');return}
+  showToast('Perfil atualizado!')
+  await carregarConfig()
+}} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 10px',fontSize:13,background:SURFACE,marginBottom:6}}>
+<option value="vendedor">Vendedor</option>
+<option value="admin">Administrador</option>
+<option value="outro">Outro (personalizado)</option>
+</select>
+{(!['vendedor','admin'].includes(u.config?.perfil))&&<div style={{display:'flex',gap:6}}>
+<input type="text" placeholder="Nome do perfil" defaultValue={u.config?.perfil||''} onBlur={async(e)=>{
+  const novoValor=e.target.value.trim()
+  if(!novoValor||novoValor===u.config?.perfil)return
+  const{error}=await supabase.from('user_config').update({perfil:novoValor}).eq('user_id',u.id)
+  if(error){showToast('Erro: '+error.message,'error');return}
+  showToast('Perfil atualizado!')
+  await carregarConfig()
+}} style={{flex:1,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 10px',fontSize:13,boxSizing:'border-box'}}/>
+</div>}
+</div>}                                                                                                                   
 {u.id!==ADMIN_ID&&<div style={{display:'flex',gap:8}}>
 <input type="password" placeholder="Nova senha…" value={senhaUser[u.id]||''} onChange={e=>setSenhaUser(prev=>({...prev,[u.id]:e.target.value}))} style={{flex:1,border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 10px',fontSize:13,boxSizing:'border-box'}}/>
 <button onClick={()=>atualizarSenha(u.id)} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'8px 12px',fontWeight:600,fontSize:12,cursor:'pointer'}}>Alterar</button>
