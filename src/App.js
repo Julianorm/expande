@@ -1275,6 +1275,13 @@ return view==='compras'?<>
 <option value="">Selecionar vendedor eGestor…</option>
 {configVendedores.map(v=><option key={v.codigo} value={v.codigo}>{v.nome}</option>)}
 </select>
+<label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>PERFIL</label>
+<select value={novoPerfil} onChange={e=>setNovoPerfil(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="vendedor">Vendedor</option>
+<option value="admin">Administrador</option>
+<option value="outro">Outro…</option>
+</select>
+{novoPerfil==='outro'&&<input type="text" placeholder="Nome do perfil" value={novoPerfilCustom} onChange={e=>setNovoPerfilCustom(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>}
 <button onClick={criarUsuario} disabled={configLoading} style={{width:'100%',background:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>✅ Criar Usuário</button>
 </div>
 {configUsuarios.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
@@ -1285,6 +1292,7 @@ return view==='compras'?<>
 <div style={{fontWeight:600,fontSize:13}}>{u.config?.name||'Sem nome'}</div>
 <div style={{fontSize:11,color:MUTED}}>{u.email}</div>
 <div style={{fontSize:11,color:MUTED}}>Vendedor: {configVendedores.find(v=>v.codigo===u.config?.egestor_vendedor_code)?.nome||'Não vinculado'}</div>
+<div style={{marginTop:2}}><Badge color={u.config?.perfil==='admin'?DANGER:ACCENT}>{u.config?.perfil||'vendedor'}</Badge></div>
 </div>
 {u.id!==ADMIN_ID&&<button onClick={()=>deletarUsuario(u.id)} style={{background:'#FEF2F2',border:`1px solid ${DANGER}33`,borderRadius:7,padding:'6px 10px',fontSize:11,fontWeight:600,color:DANGER,cursor:'pointer'}}>🗑️</button>}
 </div>
