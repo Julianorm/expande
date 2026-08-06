@@ -12,7 +12,7 @@ const getGpsLocation=()=>new Promise(resolve=>{
   navigator.geolocation.getCurrentPosition(
     pos=>{console.log('GPS capturado:',pos.coords.latitude,pos.coords.longitude);resolve({lat:pos.coords.latitude,lng:pos.coords.longitude})},
     err=>{console.log('Erro GPS:',err.code,err.message);resolve(null)},
-    {timeout:15000,maximumAge:60000}
+    {timeout:15000,maximumAge:0}
   )
 })
 const EGESTOR_API='https://qtogmmgkpnpkmvnkoxsz.supabase.co/functions/v1/egestor-api'
