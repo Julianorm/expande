@@ -324,7 +324,7 @@ const gerarRelatorio=async()=>{
       const totals={}
       mesesUnicos.forEach(m=>totals[m]=0)
       let total=0
-      ;(salesData||[]).filter(s=>s.client_id===c.id).forEach(s=>{
+      ;(salesData||[]).filter(s=>s.client_id===c.id&&!['Bonificação','Troca'].includes(s.note)).forEach(s=>{
         const mes=s.date.slice(0,7)
         if(totals[mes]!==undefined){totals[mes]+=s.value;total+=s.value}
       })
@@ -1086,7 +1086,7 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>}
 {activeTab==='relatorio'&&<div>
 <div style={{display:'flex',gap:8,marginBottom:12}}>
-{user?.id===ADMIN_ID&&<button onClick={()=>setRelatorioTipo('compras')} style={{flex:1,background:relatorioTipo==='compras'?ACCENT:SURFACE,color:relatorioTipo==='compras'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='compras'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Compras</button>}
+{user?.id===ADMIN_ID&&<button onClick={()=>setRelatorioTipo('compras')} style={{flex:1,background:relatorioTipo==='compras'?ACCENT:SURFACE,color:relatorioTipo==='compras'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='compras'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Vendas</button>}
 <button onClick={()=>setRelatorioTipo('trocas')} style={{flex:1,background:relatorioTipo==='trocas'?ACCENT:SURFACE,color:relatorioTipo==='trocas'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='trocas'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Trocas</button>
 <button onClick={()=>setRelatorioTipo('ticket')} style={{flex:1,background:relatorioTipo==='ticket'?ACCENT:SURFACE,color:relatorioTipo==='ticket'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='ticket'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Ticket Médio</button>
 </div>
@@ -1094,7 +1094,7 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 const view=user?.id===ADMIN_ID?relatorioTipo:(relatorioTipo==='compras'?'trocas':relatorioTipo)
 return view==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
-<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Compras por Rota</div>
+<div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Vendas por Rota</div>
 <select value={relatorioRoute} onChange={e=>setRelatorioRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="">Todas as rotas</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
