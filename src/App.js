@@ -581,7 +581,7 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <Tab id="vendas" label="Vendas" icon="💰"/>
 <Tab id="pedido" label="Pedido" icon="🛒" badge={orders.length}/>
 <Tab id="relatorio" label="Relatório" icon="📈"/>
-{user?.id===ADMIN_ID&&<Tab id="config" label="Config" icon="⚙️"/>}
+{isPrivileged&&<Tab id="config" label="Config" icon="⚙️"/>}
 </div>
 <div style={{padding:'12px 16px'}}>
 {clientePerfil&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:500,display:'flex',alignItems:'flex-end'}}>
@@ -1261,7 +1261,8 @@ return view==='compras'?<>
 </>
 })()}
 </div>}
-{activeTab==='config'&&user?.id===ADMIN_ID&&<div>
+{activeTab==='config'&&isPrivileged&&<div>
+{user?.id===ADMIN_ID&&<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>⚙️ Configurações</div>
 <button onClick={carregarConfig} disabled={configLoading} style={{width:'100%',background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:14,cursor:'pointer',marginBottom:12}}>
@@ -1333,6 +1334,7 @@ return view==='compras'?<>
 </div>}
 </div>)}
 </div>}
+</>}
 <div style={{background:CARD,border:`1px solid ${BORDER}`,padding:'14px 16px'}}>
 <div style={{fontWeight:700,fontSize:13,marginBottom:8}}>🔄 Sincronizar Produtos</div>
 <div style={{fontSize:12,color:MUTED,marginBottom:12}}>Atualiza todos os produtos do eGestor no CRM.</div>
