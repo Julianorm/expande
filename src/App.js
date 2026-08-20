@@ -1279,6 +1279,7 @@ return view==='compras'?<>
 <select value={novoPerfil} onChange={e=>setNovoPerfil(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="vendedor">Vendedor</option>
 <option value="admin">Administrador</option>
+<option value="financeiro">Financeiro</option>
 <option value="outro">Outro…</option>
 </select>
 {novoPerfil==='outro'&&<input type="text" placeholder="Nome do perfil" value={novoPerfilCustom} onChange={e=>setNovoPerfilCustom(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>}
@@ -1303,7 +1304,7 @@ return view==='compras'?<>
 </div>}
  {u.id!==ADMIN_ID&&<div style={{marginBottom:8}}>
 <div style={{fontSize:11,fontWeight:600,color:MUTED,marginBottom:6}}>PERFIL</div>
-<select value={['vendedor','admin'].includes(u.config?.perfil)?u.config?.perfil:(u.config?.perfil?'outro':'vendedor')} onChange={async(e)=>{
+<select value={['vendedor','admin','financeiro'].includes(u.config?.perfil)?u.config?.perfil:(u.config?.perfil?'outro':'vendedor')} onChange={async(e)=>{
   if(e.target.value==='outro')return
   const{error}=await supabase.from('user_config').update({perfil:e.target.value}).eq('user_id',u.id)
   if(error){showToast('Erro: '+error.message,'error');return}
@@ -1312,9 +1313,10 @@ return view==='compras'?<>
 }} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'8px 10px',fontSize:13,background:SURFACE,marginBottom:6}}>
 <option value="vendedor">Vendedor</option>
 <option value="admin">Administrador</option>
+<option value="financeiro">Financeiro</option>
 <option value="outro">Outro (personalizado)</option>
 </select>
-{(!['vendedor','admin'].includes(u.config?.perfil))&&<div style={{display:'flex',gap:6}}>
+{(!['vendedor','admin','financeiro'].includes(u.config?.perfil))&&<div style={{display:'flex',gap:6}}>
 <input type="text" placeholder="Nome do perfil" defaultValue={u.config?.perfil||''} onBlur={async(e)=>{
   const novoValor=e.target.value.trim()
   if(!novoValor||novoValor===u.config?.perfil)return
