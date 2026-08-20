@@ -46,6 +46,7 @@ const[adminLoading,setAdminLoading]=useState(false)
 const[adminVisitasSemVenda,setAdminVisitasSemVenda]=useState([])
 const[adminGoalValue,setAdminGoalValue]=useState('')
 const[adminDtEntregaValue,setAdminDtEntregaValue]=useState('')
+const[userPerfil,setUserPerfil]=useState('')
 const[ordemEdit,setOrdemEdit]=useState({})
 const[ordemSaving,setOrdemSaving]=useState(false)
 const[tabSaleClient,setTabSaleClient]=useState(null)
@@ -144,7 +145,7 @@ const checkGpsPermission=()=>{
     {timeout:8000,maximumAge:0}
   )
 }
-const loadClients=useCallback(async()=>{if(!user?.id)return;const{data:userCfg}=await supabase.from('user_config').select('rotas').eq('user_id',user.id).single();const rotasUser=userCfg?.rotas||[];const query=supabase.from('clients').select('*').order('route').order('ordem');const{data,error}=rotasUser.length>0?await query.overlaps('rotas',rotasUser):await query;if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data||[]);setRoutes([...new Set((data||[]).map(c=>c.route))].sort())},[user?.id])
+const loadClients=useCallback(async()=>{if(!user?.id)return;const{data:userCfg}=await supabase.from('user_config').select('rotas,perfil').eq('user_id',user.id).single();setUserPerfil(userCfg?.perfil||'');const rotasUser=userCfg?.rotas||[];const query=supabase.from('clients').select('*').order('route').order('ordem');const{data,error}=rotasUser.length>0?await query.overlaps('rotas',rotasUser):await query;if(error){showToast('Erro ao carregar clientes.','error');return}setClients(data||[]);setRoutes([...new Set((data||[]).map(c=>c.route))].sort())},[user?.id])
 const loadSales=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('sales').select('*').eq('user_id',user.id).eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar vendas.','error');return}setSales(data)},[user?.id])
 const loadOrders=useCallback(async()=>{if(!user?.id)return;const{data,error}=await supabase.from('orders').select('*').eq('user_id',user.id).eq('status','pendente').eq('date',today()).order('created_at');if(error){showToast('Erro ao carregar pedidos.','error');return}setOrders(data||[])},[user?.id])
 const loadGoal=useCallback(async(route)=>{if(!route||!user?.id)return;const{data}=await supabase.from('daily_goals').select('goal_value,dt_entrega').eq('user_id',user.id).eq('route',route).eq('date',today()).single();setDailyGoal(data?.goal_value||'');setDtEntrega(data?.dt_entrega||'')},[user?.id])
@@ -370,6 +371,7 @@ const ticketColor=ticketMeta===0?ACCENT:avgTicket>=ticketMeta?SUCCESS:avgTicket>
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
 const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch])
+const isPrivileged=user?.id===ADMIN_ID||userPerfil==='financeiro'  
 const relatorioTotaisPorMes=useMemo(()=>{
   const totais={}
   relatorioMeses.forEach(m=>{totais[m]=relatorioClientes.reduce((a,c)=>a+(c.totals[m]||0),0)})
