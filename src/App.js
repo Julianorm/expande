@@ -47,6 +47,7 @@ const[adminVisitasSemVenda,setAdminVisitasSemVenda]=useState([])
 const[adminGoalValue,setAdminGoalValue]=useState('')
 const[adminDtEntregaValue,setAdminDtEntregaValue]=useState('')
 const[userPerfil,setUserPerfil]=useState('')
+const isPrivileged=user?.id===ADMIN_ID||userPerfil==='financeiro'
 const[ordemEdit,setOrdemEdit]=useState({})
 const[ordemSaving,setOrdemSaving]=useState(false)
 const[tabSaleClient,setTabSaleClient]=useState(null)
@@ -370,10 +371,9 @@ const ticketMeta=dailyGoal&&activeRouteClients.length>0?dailyGoal/activeRouteCli
 const ticketColor=ticketMeta===0?ACCENT:avgTicket>=ticketMeta?SUCCESS:avgTicket>=ticketMeta*0.8?WARNING:DANGER
 const goalProgress=dailyGoal?Math.min((totalSold/dailyGoal)*100,100):0
 const clientSuggestions=useMemo(()=>{const pool=selectedRoute?routeClients:clients;if(!tabSaleClientInput.trim())return pool.slice(0,6);return pool.filter(c=>c.name.toLowerCase().includes(tabSaleClientInput.toLowerCase())).slice(0,6)},[clients,routeClients,selectedRoute,tabSaleClientInput])
-const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch])
-const isPrivileged=user?.id===ADMIN_ID||userPerfil==='financeiro'  
+const filteredClients=useMemo(()=>(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(clientSearch.toLowerCase())),[routeClients,clients,selectedRoute,clientSearch]) 
 const relatorioTotaisPorMes=useMemo(()=>{
-  const totais={}
+const totais={}
   relatorioMeses.forEach(m=>{totais[m]=relatorioClientes.reduce((a,c)=>a+(c.totals[m]||0),0)})
   return totais
 },[relatorioClientes,relatorioMeses])
