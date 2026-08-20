@@ -1148,10 +1148,10 @@ return view==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🔄 Relatório de Trocas</div>
 <select value={trocaRoute} onChange={e=>setTrocaRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option value="">{user?.id===ADMIN_ID?'Todas as rotas':'Todas as minhas rotas'}</option>
+<option value="">{isPrivileged?'Todas as rotas':'Todas as minhas rotas'}</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
-{user?.id===ADMIN_ID&&<select value={trocaVendedorFiltro} onChange={e=>setTrocaVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+{isPrivileged&&<select value={trocaVendedorFiltro} onChange={e=>setTrocaVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="">Todos os vendedores</option>
 {trocaVendedoresList.map(v=><option key={v.user_id} value={v.user_id}>{v.name}</option>)}
 </select>}
@@ -1212,10 +1212,10 @@ return view==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>🎯 Ticket Médio</div>
 <select value={ticketRoute} onChange={e=>setTicketRoute(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option value="">{user?.id===ADMIN_ID?'Todas as rotas':'Todas as minhas rotas'}</option>
+<option value="">{isPrivileged?'Todas as rotas':'Todas as minhas rotas'}</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
-{user?.id===ADMIN_ID&&<select value={ticketVendedorFiltro} onChange={e=>setTicketVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+{isPrivileged&&<select value={ticketVendedorFiltro} onChange={e=>setTicketVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
 <option value="">Todos os vendedores</option>
 {trocaVendedoresList.map(v=><option key={v.user_id} value={v.user_id}>{v.name}</option>)}
 </select>}
