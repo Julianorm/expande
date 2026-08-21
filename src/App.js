@@ -284,6 +284,16 @@ const abrirModalProdutosEdicao=async()=>{
     }catch(err){showToast('Erro ao carregar produtos','error')}
   }
 }
+const abrirModalProdutosVenda=async()=>{
+  setModalProdutosVenda(true)
+  setModalProdutoSearch('')
+  if(todosProdutos.length===0){
+    try{
+      const{data}=await supabase.from('products').select('*').gt('preco_venda',0).or('tags.cs.{"PROPRIO"},tags.cs.{"TERCEIROS"}').order('descricao')
+      setTodosProdutos(data||[])
+    }catch(err){showToast('Erro ao carregar produtos','error')}
+  }
+}
  const abrirModalProdutos=async()=>{
   setModalProdutos(true)
   setModalProdutoSearch('')
