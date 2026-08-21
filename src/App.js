@@ -337,6 +337,52 @@ const abrirEdicaoVenda=async(venda)=>{
   setEditVendaLoading(false)
 }
 const salvarEdicaoOrder=async()=>{if(!editandoOrder||editOrderProdutos.length===0){showToast('Adicione ao menos um produto','error');return}const total=editOrderProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0);const{error}=await supabase.from('orders').update({produtos:editOrderProdutos,forma_pgto:parseInt(editOrderFormaPgto),situacao:editOrderSituacao,total}).eq('id',editandoOrder.id);if(error){showToast('Erro ao salvar','error');return}showToast('Pedido atualizado!');setEditandoOrder(null);await loadOrders()}
+const salvarEdicaoVenda=async()=>{
+  if(!editandoVenda||editVendaProdutos.length===0){showToast('Adicione ao menos um produto','error');return}
+  if(!editandoVenda.erp_code){showToast('Venda sem código eGestor, não é possível editar.','error');return}
+  setEditVendaLoading(true)
+  try{
+    const total=editVendaProdutos.reduce((acc,p)=>{const sub=p.precoVenda*p.quant;const desc=sub*(p.vDesc||0)/100;return acc+sub-desc},0)
+    const res=await fetch(`${EGESTOR_API}?action=editar_venda`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      codVenda:editandoVenda.erp_code,
+      codContato:editandoVenda.client_erp_code,
+      produtos:editVendaProdutos.map(p=>({codigo:p.codigo,quant:p.quant,preco:p.precoVenda,vDesc:p.vDesc||0})),
+      codFormaPgto:editVendaFormaPgto,
+      situacaoOS:editVendaSituacao,
+      user_id:editandoVenda.user_id
+    })})
+    const result=await res.json()
+    console.log('Resultado edição venda:',JSON.stringify(result))
+    if(result.error){
+      showToast('Erro no eGestor: '+result.error,'error')
+      setEditVendaLoading(false)
+      return
+    }
+    await supabase.from('sales').update({value:total,note:editVendaSituacao}).eq('id',editandoVenda.id)
+    await supabase.from('sales_items').delete().eq('sale_id',editandoVenda.id)
+    const novosItems=editVendaProdutos.map(p=>({
+      sale_id:editandoVenda.id,
+      user_id:editandoVenda.user_id,
+      client_erp_code:editandoVenda.client_erp_code,
+      erp_code:p.codigo,
+      descricao:p.descricao,
+      codigo_proprio:p.codigoProprio||'',
+      quant:p.quant,
+      preco:p.precoVenda,
+      vdesc:p.vDesc||0,
+      total:p.precoVenda*p.quant*(1-(p.vDesc||0)/100),
+      date:editandoVenda.date
+    }))
+    await supabase.from('sales_items').insert(novosItems)
+    showToast('Venda atualizada!')
+    setEditandoVenda(null)
+    if(isPrivileged&&selectedRoute)await loadAdminRouteData(selectedRoute,adminDate)
+  }catch(err){
+    showToast('Erro ao salvar edição','error')
+    console.error(err)
+  }
+  setEditVendaLoading(false)
+}
 const gerarRelatorio=async()=>{
   if(!relatorioInicio||!relatorioFim){showToast('Selecione o período.','error');return}
   setRelatorioLoading(true)
