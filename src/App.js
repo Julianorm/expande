@@ -780,16 +780,6 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 </div>
 </div>
 </div>}
-
-<div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{prod.descricao}</div>
-<div style={{fontSize:11,color:MUTED}}>{fmt(prod.precoVenda||0)}</div>
-</div>
-<div style={{display:'flex',alignItems:'center',gap:6}}>
-<button onMouseDown={()=>{if(noLista&&noLista.quant<=1){setEditVendaProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setEditVendaProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant-1}:x))}}} style={{width:32,height:32,background:noLista?DANGER:'#eee',color:noLista?'#fff':MUTED,border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-<input type="number" min="0" value={noLista?.quant||0} onChange={e=>{const q=parseFloat(e.target.value)||0;if(q===0){setEditVendaProdutos(prev=>prev.filter(x=>x.codigo!==prod.codigo))}else if(noLista){setEditVendaProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:q}:x))}else{setEditVendaProdutos(prev=>[...prev,{...prod,quant:q,vDesc:0}])}}} onFocus={e=>e.target.select()} style={{width:44,textAlign:'center',border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 4px',fontSize:14,fontWeight:700}}/>
-<button onMouseDown={()=>{if(noLista){setEditVendaProdutos(prev=>prev.map(x=>x.codigo===prod.codigo?{...x,quant:x.quant+1}:x))}else{setEditVendaProdutos(prev=>[...prev,{...prod,quant:1,vDesc:0}])}}} style={{width:32,height:32,background:ACCENT,color:'#fff',border:'none',borderRadius:6,fontSize:18,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
-</div>
-</div>})}
 </div>
 </div>
 </div>}
