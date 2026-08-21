@@ -780,44 +780,7 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 </div>
 </div>
 </div>}
-{editandoVenda&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:500,display:'flex',alignItems:'flex-end'}}>
-<div style={{background:CARD,borderRadius:'16px 16px 0 0',padding:20,width:'100%',maxHeight:'90vh',overflowY:'auto'}}>
-<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-<div style={{fontWeight:800,fontSize:15}}>✏️ Editar Venda</div>
-<button onClick={()=>setEditandoVenda(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:MUTED}}>✕</button>
-</div>
-<div style={{fontWeight:600,fontSize:13,color:ACCENT,marginBottom:12}}>{editandoVenda.client_name}</div>
-<select value={editVendaSituacao} onChange={e=>setEditVendaSituacao(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option>Pedido S/ NFe</option><option>Pedido C/ NFe</option><option>Bonificação</option><option>Troca</option>
-</select>
-<select value={editVendaFormaPgto} onChange={e=>setEditVendaFormaPgto(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
-<option value="1">Dinheiro</option><option value="2">Cheque</option><option value="8">Pix/Ted</option><option value="16">Boleto Sicoob</option><option value="17">Débito em Conta</option>
-</select>
-<button onClick={abrirModalProdutosVenda} style={{width:'100%',background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,color:ACCENT,cursor:'pointer',marginBottom:8}}>
-+ Adicionar Produto
-</button>
-{editVendaProdutos.map(p=><ProdutoCard key={p.codigo} p={p} onChange={np=>setEditVendaProdutos(prev=>prev.map(x=>x.codigo===p.codigo?np:x))} onRemove={()=>setEditVendaProdutos(prev=>prev.filter(x=>x.codigo!==p.codigo))}/>)}
-<div style={{textAlign:'right',fontWeight:800,fontSize:16,color:ACCENT,margin:'8px 0 12px'}}>Total: {fmt(editVendaProdutos.reduce((acc,p)=>acc+p.precoVenda*p.quant*(1-(p.vDesc||0)/100),0))}</div>
-<div style={{display:'flex',gap:8}}>
-<button onClick={()=>setEditandoVenda(null)} style={{flex:1,background:SURFACE,color:MUTED,border:`1px solid ${BORDER}`,borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:'pointer'}}>Cancelar</button>
-<button onClick={salvarEdicaoVenda} disabled={editVendaLoading} style={{flex:2,background:editVendaLoading?MUTED:SUCCESS,color:'#fff',border:'none',borderRadius:8,padding:'12px 0',fontWeight:700,fontSize:14,cursor:editVendaLoading?'not-allowed':'pointer'}}>{editVendaLoading?'Salvando…':'💾 Salvar e Enviar ao eGestor'}</button>
-</div>
-</div>
-</div>}
-{modalProdutosVenda&&<div style={{position:'fixed',inset:0,background:'#0008',zIndex:600,display:'flex',alignItems:'flex-end'}}>
-<div style={{background:CARD,borderRadius:'16px 16px 0 0',padding:20,width:'100%',height:'90vh',display:'flex',flexDirection:'column'}}>
-<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-<div style={{fontWeight:800,fontSize:16}}>📦 Produtos</div>
-<button onClick={()=>setModalProdutosVenda(false)} style={{background:ACCENT,color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontWeight:700,fontSize:14,cursor:'pointer'}}>Salvar</button>
-</div>
-<input type="text" placeholder="🔍 Buscar produto…" value={modalProdutoSearch} onChange={e=>setModalProdutoSearch(e.target.value)}
-style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:12}}/>
-<div style={{overflowY:'auto',flex:1}}>
-{todosProdutos.filter(p=>p.descricao?.toLowerCase().includes(modalProdutoSearch.toLowerCase())||p.codigo_proprio?.toLowerCase().includes(modalProdutoSearch.toLowerCase())).map(p=>{
-const prod={codigo:p.erp_code,descricao:p.descricao,codigoProprio:p.codigo_proprio,precoVenda:p.preco_venda}
-const noLista=editVendaProdutos.find(x=>x.codigo===prod.codigo)
-return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,border:`1px solid ${noLista?ACCENT:BORDER}`,borderRadius:10,padding:'10px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}>
+
 <div style={{fontWeight:600,fontSize:13,color:noLista?ACCENT:TEXT}}>{prod.descricao}</div>
 <div style={{fontSize:11,color:MUTED}}>{fmt(prod.precoVenda||0)}</div>
 </div>
