@@ -115,6 +115,7 @@ const[relatorioClientes,setRelatorioClientes]=useState([])
 const[relatorioMeses,setRelatorioMeses]=useState([])
 const[relatorioIncluirInativos,setRelatorioIncluirInativos]=useState(false)
 const[relatorioTipo,setRelatorioTipo]=useState('compras')
+const[relatorioVendedorFiltro,setRelatorioVendedorFiltro]=useState('')
 const[trocaRoute,setTrocaRoute]=useState('')
 const[trocaInicio,setTrocaInicio]=useState('')
 const[trocaFim,setTrocaFim]=useState('')
@@ -338,8 +339,9 @@ const gerarRelatorio=async()=>{
   if(!relatorioInicio||!relatorioFim){showToast('Selecione o período.','error');return}
   setRelatorioLoading(true)
   try{
-   let baseQuery=supabase.from('sales').select('*').gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
+let baseQuery=supabase.from('sales').select('*').gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
     baseQuery=relatorioRoute?baseQuery.eq('route',relatorioRoute):baseQuery.in('route',routes)
+    if(relatorioVendedorFiltro)baseQuery=baseQuery.eq('user_id',relatorioVendedorFiltro)
     let salesData=[]
     let pagina=0
     const TAMANHO_PAGINA=1000
