@@ -136,6 +136,12 @@ const[ticketResultado,setTicketResultado]=useState(null)
 const[syncInicio,setSyncInicio]=useState('')
 const[syncFim,setSyncFim]=useState('')
 const[syncLoading,setSyncLoading]=useState(false)
+const[editandoVenda,setEditandoVenda]=useState(null)
+const[editVendaProdutos,setEditVendaProdutos]=useState([])
+const[editVendaFormaPgto,setEditVendaFormaPgto]=useState('1')
+const[editVendaSituacao,setEditVendaSituacao]=useState('Pedido S/ NFe')
+const[editVendaLoading,setEditVendaLoading]=useState(false)
+const[modalProdutosVenda,setModalProdutosVenda]=useState(false)
 const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3200)}
 const checkGpsPermission=()=>{
   if(!navigator.geolocation){setGpsStatus('denied');return}
