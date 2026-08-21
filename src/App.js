@@ -1006,7 +1006,6 @@ return<>
 {isPrivileged&&adminSalesItems[s.id]&&<div style={{fontSize:11,color:MUTED,marginTop:6,paddingTop:6,borderTop:`1px solid ${BORDER}`}}>
 {adminSalesItems[s.id].map(item=>`${item.descricao} x${item.quant}`).join(', ')}
 </div>}
-<Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 </div>)}
 </div>
 </>}
