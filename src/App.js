@@ -1123,7 +1123,6 @@ return<>
 <div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
 <div style={{fontSize:11,color:MUTED}}>{new Date(s.date+'T12:00:00').toLocaleDateString('pt-BR')} • {s.sale_time}{s.route?' • '+s.route:''}{s.note?' • '+s.note:''}</div>
 </div>
-{isPrivileged&&<button onClick={()=>abrirEdicaoVenda(s)} style={{background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 10px',fontSize:11,fontWeight:600,color:TEXT,cursor:'pointer'}}>✏️ Editar</button>}
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 </div>
 {isPrivileged&&adminSalesItems[s.id]&&<div style={{fontSize:11,color:MUTED,marginTop:6,paddingTop:6,borderTop:`1px solid ${BORDER}`}}>
