@@ -1143,6 +1143,10 @@ return view==='compras'?<>
 <option value="">Todas as rotas</option>
 {routes.map(r=><option key={r} value={r}>{r}</option>)}
 </select>
+<select value={relatorioVendedorFiltro} onChange={e=>setRelatorioVendedorFiltro(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
+<option value="">Todos os vendedores</option>
+{trocaVendedoresList.map(v=><option key={v.user_id} value={v.user_id}>{v.name}</option>)}
+</select>
 <div style={{display:'flex',gap:8,marginBottom:8}}>
 <div style={{flex:1}}>
 <label style={{fontSize:11,fontWeight:600,color:MUTED,display:'block',marginBottom:4}}>DE</label>
