@@ -44,6 +44,7 @@ const[adminOrders,setAdminOrders]=useState([])
 const[adminVendorNames,setAdminVendorNames]=useState({})
 const[adminLoading,setAdminLoading]=useState(false)
 const[adminVisitasSemVenda,setAdminVisitasSemVenda]=useState([])
+const[adminSalesItems,setAdminSalesItems]=useState({})
 const[adminGoalValue,setAdminGoalValue]=useState('')
 const[adminDtEntregaValue,setAdminDtEntregaValue]=useState('')
 const[userPerfil,setUserPerfil]=useState('')
@@ -161,10 +162,22 @@ const loadAdminRouteData=useCallback(async(route,date)=>{
   setAdminLoading(true)
   const{data:salesData}=await supabase.from('sales').select('*').eq('route',route).eq('date',date).order('created_at')
   const{data:ordersData}=await supabase.from('orders').select('*').eq('route',route).eq('date',date).order('created_at')
-  const{data:visitasData}=await supabase.from('visitas_sem_venda').select('*').eq('route',route).eq('date',date).order('created_at')
+   const{data:visitasData}=await supabase.from('visitas_sem_venda').select('*').eq('route',route).eq('date',date).order('created_at')
 setAdminVisitasSemVenda(visitasData||[])
   setAdminSales(salesData||[])
   setAdminOrders(ordersData||[])
+  const saleIdsForItems=(salesData||[]).map(s=>s.id)
+  if(saleIdsForItems.length>0){
+    const{data:itemsData}=await supabase.from('sales_items').select('*').in('sale_id',saleIdsForItems)
+    const itemsMap={}
+    ;(itemsData||[]).forEach(item=>{
+      if(!itemsMap[item.sale_id])itemsMap[item.sale_id]=[]
+      itemsMap[item.sale_id].push(item)
+    })
+    setAdminSalesItems(itemsMap)
+  }else{
+    setAdminSalesItems({})
+  }
   const userIds=[...new Set([...(salesData||[]).map(s=>s.user_id),...(ordersData||[]).map(o=>o.user_id)].filter(Boolean))]
   if(userIds.length>0){
     const{data:usersData}=await supabase.from('user_config').select('user_id,name').in('user_id',userIds)
