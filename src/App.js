@@ -338,10 +338,18 @@ const gerarRelatorio=async()=>{
   if(!relatorioInicio||!relatorioFim){showToast('Selecione o período.','error');return}
   setRelatorioLoading(true)
   try{
-    let query=supabase.from('sales').select('*').gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
-    query=relatorioRoute?query.eq('route',relatorioRoute):query.in('route',routes)
-    const{data:salesData,error}=await query
-    if(error){showToast('Erro ao carregar relatório: '+error.message,'error');setRelatorioLoading(false);return}
+   let baseQuery=supabase.from('sales').select('*').gte('date',relatorioInicio).lte('date',relatorioFim).order('date')
+    baseQuery=relatorioRoute?baseQuery.eq('route',relatorioRoute):baseQuery.in('route',routes)
+    let salesData=[]
+    let pagina=0
+    const TAMANHO_PAGINA=1000
+    while(true){
+      const{data:pageData,error}=await baseQuery.range(pagina*TAMANHO_PAGINA,(pagina+1)*TAMANHO_PAGINA-1)
+      if(error){showToast('Erro ao carregar relatório: '+error.message,'error');setRelatorioLoading(false);return}
+      salesData=salesData.concat(pageData||[])
+      if(!pageData||pageData.length<TAMANHO_PAGINA)break
+      pagina++
+    }
     const routeClients=relatorioRoute?clients.filter(c=>(c.rotas||[c.route]).includes(relatorioRoute)&&(relatorioIncluirInativos||!c.inactive)):clients.filter(c=>relatorioIncluirInativos||!c.inactive)
     const meses=[]
     let d=new Date(relatorioInicio+'T12:00:00')
