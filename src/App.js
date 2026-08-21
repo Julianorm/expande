@@ -1014,12 +1014,12 @@ return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',b
 </div>}
 {activeTab==='vendas'&&<div>
 {(()=>{
-const vendasBase=user?.id===ADMIN_ID?adminSales:(selectedRoute?routeSales:sales)
-const pedidosBase=user?.id===ADMIN_ID?adminOrders:(selectedRoute?routeOrders:orders)
+const vendasBase=isPrivileged?adminSales:(selectedRoute?routeSales:sales)
+const pedidosBase=isPrivileged?adminOrders:(selectedRoute?routeOrders:orders)
 const totalExportado=vendasBase.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0)
 const totalPendente=pedidosBase.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0)
 const totalGeral=totalExportado+totalPendente
-const metaBase=user?.id===ADMIN_ID?adminGoalValue:dailyGoal
+const metaBase=isPrivileged?adminGoalValue:dailyGoal
 const progresso=metaBase>0?Math.min((totalGeral/metaBase)*100,100):0
 return<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
@@ -1057,11 +1057,18 @@ return<>
 {vendasBase.length>0&&<>
 <div style={{fontWeight:700,fontSize:13,marginBottom:8,color:SUCCESS}}>✅ Exportados para eGestor ({vendasBase.length})</div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
-{[...vendasBase].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+{[...vendasBase].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE}}>
+<div style={{display:'flex',alignItems:'center',gap:8}}>
 <div style={{flex:1}}>
 <div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
-<div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.route?' • '+s.route:''}{s.note?' • '+s.note:''}</div>
+<div style={{fontSize:11,color:MUTED}}>{new Date(s.date+'T12:00:00').toLocaleDateString('pt-BR')} • {s.sale_time}{s.route?' • '+s.route:''}{s.note?' • '+s.note:''}</div>
 </div>
+{isPrivileged&&<button onClick={()=>abrirEdicaoVenda(s)} style={{background:SURFACE,border:`1px solid ${BORDER}`,borderRadius:6,padding:'6px 10px',fontSize:11,fontWeight:600,color:TEXT,cursor:'pointer'}}>✏️ Editar</button>}
+<Badge color={SUCCESS}>{fmt(s.value)}</Badge>
+</div>
+{isPrivileged&&adminSalesItems[s.id]&&<div style={{fontSize:11,color:MUTED,marginTop:6,paddingTop:6,borderTop:`1px solid ${BORDER}`}}>
+{adminSalesItems[s.id].map(item=>`${item.descricao} x${item.quant}`).join(', ')}
+</div>}
 <Badge color={SUCCESS}>{fmt(s.value)}</Badge>
 </div>)}
 </div>
