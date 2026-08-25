@@ -463,12 +463,17 @@ const gerarTicketMedio=async()=>{
       if(saleIds.length>0){
         const{data:produtosProprios}=await supabase.from('products').select('erp_code').filter('tags','cs','{"PROPRIO"}')
         const propriosSet=new Set((produtosProprios||[]).map(p=>String(p.erp_code)))
-        let itemsData=[]
+       let itemsData=[]
         const LOTE_ITEMS=200
         for(let i=0;i<saleIds.length;i+=LOTE_ITEMS){
           const loteIds=saleIds.slice(i,i+LOTE_ITEMS)
-          const{data:loteItems}=await supabase.from('sales_items').select('sale_id,erp_code,total').in('sale_id',loteIds)
-          itemsData=itemsData.concat(loteItems||[])
+          let pagina=0
+          while(true){
+            const{data:loteItems}=await supabase.from('sales_items').select('sale_id,erp_code,total').in('sale_id',loteIds).range(pagina*1000,(pagina+1)*1000-1)
+            itemsData=itemsData.concat(loteItems||[])
+            if(!loteItems||loteItems.length<1000)break
+            pagina++
+          }
         }
         totalVendido=(itemsData||[]).filter(item=>propriosSet.has(String(item.erp_code))).reduce((a,item)=>a+item.total,0)
       }
