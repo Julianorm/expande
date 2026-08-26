@@ -1073,19 +1073,24 @@ return<>
 <span style={{fontWeight:700,color:ACCENT,flex:1,fontSize:13}}>{pedidoCliente.name}</span>
 <button onClick={()=>setPedidoCliente(null)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
 </div>
-:<div style={{position:'relative',marginBottom:8}}>
-<input type="text" placeholder="🔍 Buscar cliente…" value={pedidoClienteSearch||''} onChange={e=>setPedidoClienteSearch(e.target.value)}
-style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box'}}/>
-{pedidoClienteSearch&&(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(pedidoClienteSearch.toLowerCase())).length>0&&
-<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:100,background:CARD,border:`1px solid ${BORDER}`,borderRadius:8,boxShadow:'0 8px 24px #0002',marginTop:4,maxHeight:220,overflowY:'auto'}}>
-{(selectedRoute?routeClients:clients).filter(c=>c.name.toLowerCase().includes(pedidoClienteSearch.toLowerCase())).slice(0,8).map(c=>
-<div key={c.id} onMouseDown={()=>{setPedidoCliente(c);setPedidoClienteSearch('')}}
-style={{padding:'10px 14px',cursor:'pointer',borderBottom:`1px solid ${BORDER}`,fontSize:13}}
-onMouseEnter={e=>e.currentTarget.style.background=ACCENT_LIGHT}
-onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-<div style={{fontWeight:600}}>{c.name}</div>
-<div style={{fontSize:11,color:MUTED}}>{c.route}</div>
-</div>)}
+:<div style={{marginBottom:8}}>
+<input type="text" placeholder="🔍 Buscar cliente na rota…" value={pedidoClienteSearch||''} onChange={e=>setPedidoClienteSearch(e.target.value)}
+style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,boxSizing:'border-box',marginBottom:8}}/>
+{!selectedRoute?<div style={{textAlign:'center',padding:'20px',color:MUTED,fontSize:13}}>Selecione uma rota no Dashboard primeiro</div>
+:<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,overflow:'hidden',maxHeight:400,overflowY:'auto'}}>
+{routeClients.filter(c=>c.name.toLowerCase().includes((pedidoClienteSearch||'').toLowerCase())).map((c,i)=>{
+const vendido=soldClientIds.has(c.id)||orders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+const temPedido=orders.some(o=>o.client_id===c.id||o.client_erp_code===c.erp_code)
+return<div key={c.id} onClick={()=>abrirPerfil(c)} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,cursor:'pointer',background:vendido?'#F0FDF4':c.inactive?'#FFF7ED':'transparent'}}>
+<div style={{width:26,height:26,borderRadius:99,background:temPedido?WARNING:vendido?SUCCESS:c.inactive?'#FEE2E2':BORDER,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0,color:'#fff',fontWeight:700}}>
+{temPedido?'📋':vendido?'✓':c.inactive?'⛔':i+1}
+</div>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
+<div style={{fontSize:11,color:MUTED}}>{temPedido?'Pedido pendente':vendido?'Atendido':'Aguardando visita'}</div>
+</div>
+<span style={{color:MUTED,fontSize:16}}>›</span>
+</div>})}
 </div>}
 </div>}
 <select value={pedidoSituacao} onChange={e=>setPedidoSituacao(e.target.value)} style={{width:'100%',border:`1px solid ${BORDER}`,borderRadius:8,padding:'10px 12px',fontSize:14,background:SURFACE,marginBottom:8}}>
