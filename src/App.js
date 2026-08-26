@@ -451,12 +451,9 @@ const gerarTicketMedio=async()=>{
 
     const clientesInativos=new Set(clients.filter(c=>c.inactive).map(c=>c.id))
 
-    const atendidosSet=new Set()
-    ;(salesData||[]).forEach(s=>{if(s.client_id&&!clientesInativos.has(s.client_id))atendidosSet.add(s.client_id)})
-    ;(visitasData||[]).forEach(v=>{if(v.client_id&&!clientesInativos.has(v.client_id))atendidosSet.add(v.client_id)})
-
-    const vendasValidas=(salesData||[]).filter(s=>!['Bonificação','Troca'].includes(s.note)&&(!s.client_id||!clientesInativos.has(s.client_id)))
-
+   const vendasValidas=(salesData||[]).filter(s=>!['Bonificação','Troca'].includes(s.note)&&(!s.client_id||!clientesInativos.has(s.client_id)))
+    const visitasValidas=(visitasData||[]).filter(v=>!v.client_id||!clientesInativos.has(v.client_id))
+    const numPedidos=vendasValidas.length+visitasValidas.length
     let totalVendido=0
     if(ticketSoProprio){
       const saleIds=vendasValidas.map(s=>s.id)
@@ -481,10 +478,9 @@ const gerarTicketMedio=async()=>{
       totalVendido=vendasValidas.reduce((a,s)=>a+s.value,0)
     }
 
-    const numClientes=atendidosSet.size
-    const ticketMedio=numClientes>0?totalVendido/numClientes:0
+    const ticketMedio=numPedidos>0?totalVendido/numPedidos:0
 
-    setTicketResultado({totalVendido,numClientes,ticketMedio})
+    setTicketResultado({totalVendido,numClientes:numPedidos,ticketMedio})
   }catch(err){
     showToast('Erro inesperado ao gerar relatório.','error')
     console.error(err)
@@ -1308,7 +1304,7 @@ return view==='compras'?<>
 </div>
 <div style={{background:SURFACE,borderRadius:10,padding:'12px',textAlign:'center'}}>
 <div style={{fontSize:20,fontWeight:800,color:TEXT}}>{ticketResultado.numClientes}</div>
-<div style={{fontSize:11,color:MUTED,fontWeight:600}}>CLIENTES ATENDIDOS</div>
+<div style={{fontSize:11,color:MUTED,fontWeight:600}}>ATENDIMENTOS</div>
 </div>
 </div>
 <div style={{background:ACCENT_LIGHT,borderRadius:10,padding:'16px',textAlign:'center'}}>
