@@ -45,6 +45,9 @@ const[adminVendorNames,setAdminVendorNames]=useState({})
 const[adminLoading,setAdminLoading]=useState(false)
 const[adminVisitasSemVenda,setAdminVisitasSemVenda]=useState([])
 const[adminSalesItems,setAdminSalesItems]=useState({})
+const[allRoutesSummary,setAllRoutesSummary]=useState([])
+const[vendorRanking,setVendorRanking]=useState([])
+const[allRoutesLoading,setAllRoutesLoading]=useState(false)
 const[adminGoalValue,setAdminGoalValue]=useState('')
 const[adminDtEntregaValue,setAdminDtEntregaValue]=useState('')
 const[userPerfil,setUserPerfil]=useState('')
@@ -193,6 +196,37 @@ setAdminVisitasSemVenda(visitasData||[])
   setAdminDtEntregaValue(goalData?.dt_entrega||'')
   setAdminLoading(false)
 },[isPrivileged])
+const loadAllRoutesOverview=useCallback(async(date)=>{
+  if(!isPrivileged)return
+  setAllRoutesLoading(true)
+  const{data:salesData}=await supabase.from('sales').select('route,user_id,value,note').eq('date',date)
+  const valid=(salesData||[]).filter(s=>!['Bonificação','Troca'].includes(s.note))
+  const routeMap={}
+  valid.forEach(s=>{
+    const r=s.route||'Sem rota'
+    if(!routeMap[r])routeMap[r]={route:r,total:0,count:0}
+    routeMap[r].total+=s.value
+    routeMap[r].count++
+  })
+  const routeSummary=Object.values(routeMap).sort((a,b)=>b.total-a.total)
+  const vendorMap={}
+  valid.forEach(s=>{
+    if(!s.user_id)return
+    if(!vendorMap[s.user_id])vendorMap[s.user_id]={user_id:s.user_id,total:0,count:0}
+    vendorMap[s.user_id].total+=s.value
+    vendorMap[s.user_id].count++
+  })
+  const vendorIds=Object.keys(vendorMap)
+  let namesMap={}
+  if(vendorIds.length>0){
+    const{data:usersData}=await supabase.from('user_config').select('user_id,name').in('user_id',vendorIds)
+    ;(usersData||[]).forEach(u=>{namesMap[u.user_id]=u.name})
+  }
+  const vendorRankingArr=Object.values(vendorMap).map(v=>({...v,name:namesMap[v.user_id]||'Desconhecido'})).sort((a,b)=>b.total-a.total)
+  setAllRoutesSummary(routeSummary)
+  setVendorRanking(vendorRankingArr)
+  setAllRoutesLoading(false)
+},[isPrivileged])
 useEffect(()=>{if(user?.id){loadClients();loadSales();loadOrders()}},[loadClients,loadSales,loadOrders,user?.id])
 useEffect(()=>{if(user?.id){checkGpsPermission()}},[user?.id])
 useEffect(()=>{
@@ -214,6 +248,11 @@ useEffect(()=>{
     loadAdminRouteData(selectedRoute,adminDate)
   }
 },[isPrivileged,selectedRoute,adminDate,loadAdminRouteData])
+useEffect(()=>{
+  if(isPrivileged){
+    loadAllRoutesOverview(adminDate)
+  }
+},[isPrivileged,adminDate,loadAllRoutesOverview])
 const importClients=useCallback(async(rows)=>{if(!user?.id)return;setLoading(true);await supabase.from('clients').delete().eq('empresa_id','mageski');const toInsert=rows.map(cols=>({empresa_id:'mageski',name:String(cols[0]).trim(),route:String(cols[1]).trim(),inactive:cols[2]&&String(cols[2]).trim().toLowerCase()==='inativo'}));const{error}=await supabase.from('clients').insert(toInsert);if(error){showToast('Erro ao salvar clientes.','error');setLoading(false);return}await loadClients();setSales([]);setSelectedRoute('');setDailyGoal('');setLoading(false);showToast(`${toInsert.length} clientes importados!`)},[user?.id,loadClients])
 const handleFile=useCallback((file)=>{if(!file)return;const reader=new FileReader();reader.onload=async(e)=>{try{const wb=XLSX.read(e.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(ws,{header:1});await importClients(data.slice(1).filter(r=>r[0]&&r[1]))}catch{showToast('Erro ao ler planilha.','error')}};reader.readAsBinaryString(file)},[importClients])
 const handlePaste=useCallback(async()=>{try{const lines=pasteText.trim().split('\n').filter(Boolean);if(lines.length<2){showToast('Cole ao menos uma linha além do cabeçalho.','error');return}const dataLines=lines[0].toLowerCase().includes('cliente')?lines.slice(1):lines;const rows=dataLines.map(l=>l.split('\t')).filter(c=>c[0]?.trim()&&c[1]?.trim());if(rows.length===0){showToast('Nenhum dado válido.','error');return}await importClients(rows);setShowPaste(false);setPasteText('')}catch{showToast('Erro ao processar dados.','error')}},[pasteText,importClients])
