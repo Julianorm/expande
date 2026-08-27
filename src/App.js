@@ -860,6 +860,10 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <KpiCard label="Restantes" value={adminActiveRouteClients.length-adminSoldClientIds.size} sub={adminActiveRouteClients.length-adminSoldClientIds.size===0?'Concluído! 🎉':'a visitar'} color={adminActiveRouteClients.length-adminSoldClientIds.size===0?SUCCESS:WARNING}/>
 <KpiCard label="Total Vendido" value={fmt(adminTotalSold)} sub={`${adminSales.length} venda(s)`} color={ACCENT}/>
 </div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span style={{fontWeight:700,fontSize:13}}>🔄 Percentual de Trocas (hoje)</span>
+<span style={{fontWeight:800,fontSize:18,color:adminTrocaPercentual>=10?DANGER:adminTrocaPercentual>0?WARNING:SUCCESS}}>{adminTrocaPercentual.toFixed(1)}%</span>
+</div>
 {adminOrders.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
 <div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,color:WARNING}}>📋 Pedidos Pendentes ({adminOrders.length}) — {fmt(adminTotalPendente)}</div>
 {adminOrders.map((o,i)=><div key={o.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
@@ -889,6 +893,10 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <KpiCard label="Atendidos" value={activeSoldIds.size} sub={`${activeRouteClients.length>0?Math.round((activeSoldIds.size/activeRouteClients.length)*100):0}%`} color={SUCCESS}/>
 <KpiCard label="Restantes" value={remaining} sub={remaining===0?'Concluído! 🎉':'a visitar'} color={remaining===0?SUCCESS:WARNING}/>
 <KpiCard label="Ticket Médio" value={fmt(avgTicket)} sub={ticketMeta>0?`Meta: ${fmt(ticketMeta)}`:`${activeSoldIds.size} venda(s)`} color={ticketColor}/>
+</div>
+<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<span style={{fontWeight:700,fontSize:13}}>🔄 Percentual de Trocas (hoje)</span>
+<span style={{fontWeight:800,fontSize:18,color:vendorTrocaPercentual>=10?DANGER:vendorTrocaPercentual>0?WARNING:SUCCESS}}>{vendorTrocaPercentual.toFixed(1)}%</span>
 </div>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
