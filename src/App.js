@@ -576,6 +576,14 @@ const adminSoldClientIds=useMemo(()=>new Set(adminSales.map(s=>s.client_id).filt
 const adminTotalSold=useMemo(()=>adminSales.filter(s=>!['Bonificação','Troca'].includes(s.note)).reduce((a,s)=>a+s.value,0),[adminSales])
 const adminTotalPendente=useMemo(()=>adminOrders.filter(o=>!['Bonificação','Troca'].includes(o.situacao)).reduce((a,o)=>a+o.total,0),[adminOrders])
 const adminVendorsToday=useMemo(()=>{const ids=[...new Set([...adminSales.map(s=>s.user_id),...adminOrders.map(o=>o.user_id)].filter(Boolean))];return ids.map(id=>adminVendorNames[id]||'Desconhecido')},[adminSales,adminOrders,adminVendorNames])
+const adminTrocaPercentual=useMemo(()=>{
+  const trocaValue=adminSales.filter(s=>s.note==='Troca').reduce((a,s)=>a+s.value,0)
+  return adminTotalSold>0?(trocaValue/adminTotalSold*100):(trocaValue>0?100:0)
+},[adminSales,adminTotalSold])
+const vendorTrocaPercentual=useMemo(()=>{
+  const trocaValue=routeSales.filter(s=>s.note==='Troca').reduce((a,s)=>a+s.value,0)
+  return totalSold>0?(trocaValue/totalSold*100):(trocaValue>0?100:0)
+},[routeSales,totalSold])
 const Tab=({id,label,icon,badge})=><button onClick={()=>setActiveTab(id)} style={{background:activeTab===id?ACCENT:'transparent',color:activeTab===id?'#fff':MUTED,border:'none',borderRadius:8,padding:'6px 10px',fontWeight:600,fontSize:11,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,minWidth:56,position:'relative'}}>
 {badge>0&&<span style={{position:'absolute',top:2,right:8,background:DANGER,color:'#fff',borderRadius:99,fontSize:9,fontWeight:700,padding:'1px 5px'}}>{badge}</span>}
 <span style={{fontSize:18}}>{icon}</span><span>{label}</span></button>
