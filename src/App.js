@@ -863,17 +863,6 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 <Badge color={WARNING}>{fmt(o.total)}</Badge>
 </div>)}
 </div>}
-{adminSales.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
-<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>Vendas do Dia</div>
-{[...adminSales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}>
-<div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div>
-<div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.note?' • '+s.note:''}{adminVendorNames[s.user_id]?' • '+adminVendorNames[s.user_id]:''}</div>
-</div>
-{s.gps_lat&&s.gps_lng&&<a href={`https://www.google.com/maps?q=${s.gps_lat},${s.gps_lng}`} target="_blank" rel="noopener noreferrer" style={{fontSize:16,textDecoration:'none'}} title="Ver localização">📍</a>}
-<Badge color={SUCCESS}>{fmt(s.value)}</Badge>
-</div>)}
-</div>}
 {adminVisitasSemVenda.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginTop:12}}>
 <div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13,color:DANGER}}>❌ Visitas sem Venda ({adminVisitasSemVenda.length})</div>
 {[...adminVisitasSemVenda].reverse().map((v,i)=><div key={v.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
@@ -910,14 +899,6 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 </div>
 {inactiveSoldClients.map(s=><div key={s.id} style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0',borderTop:`1px solid ${WARNING}22`}}>
 <span style={{fontWeight:600}}>{s.client_name}</span><Badge color={WARNING}>{fmt(s.value)}</Badge>
-</div>)}
-</div>}
-{routeSales.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
-<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>Vendas de Hoje</div>
-{[...routeSales].reverse().map((s,i)=><div key={s.id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
-<div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{s.client_name}</div><div style={{fontSize:11,color:MUTED}}>{s.sale_time}{s.note?' • '+s.note:''}</div></div>
-<Badge color={SUCCESS}>{fmt(s.value)}</Badge>
-<button onClick={()=>handleRemoveSale(s.id)} style={{background:'none',border:'none',color:DANGER,cursor:'pointer',fontSize:16}}>✕</button>
 </div>)}
 </div>}
 </>}
