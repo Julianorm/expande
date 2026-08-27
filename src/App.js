@@ -885,6 +885,31 @@ return<div key={prod.codigo} style={{background:noLista?ACCENT_LIGHT:SURFACE,bor
 </div>}
 </div>}
 {activeTab==='dashboard'&&<div>
+{isPrivileged&&<>
+{allRoutesLoading?<div style={{textAlign:'center',padding:'20px 0',color:MUTED,fontSize:13}}>⏳ Carregando visão geral do dia...</div>:<>
+{allRoutesSummary.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>🗺️ Comparação entre Rotas (hoje)</div>
+{allRoutesSummary.map((r,i)=><div key={r.route} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{r.route}</div>
+<div style={{fontSize:11,color:MUTED}}>{r.count} venda(s)</div>
+</div>
+<Badge color={ACCENT}>{fmt(r.total)}</Badge>
+</div>)}
+</div>}
+{vendorRanking.length>0&&<div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:12}}>
+<div style={{padding:'12px 14px',borderBottom:`1px solid ${BORDER}`,fontWeight:700,fontSize:13}}>🏆 Ranking de Vendedores (hoje)</div>
+{vendorRanking.map((v,i)=><div key={v.user_id} style={{padding:'10px 14px',borderBottom:`1px solid ${BORDER}`,background:i%2===0?CARD:SURFACE,display:'flex',alignItems:'center',gap:8}}>
+<div style={{width:24,fontWeight:800,fontSize:13,color:i===0?WARNING:MUTED}}>{i+1}º</div>
+<div style={{flex:1}}>
+<div style={{fontWeight:600,fontSize:13}}>{v.name}</div>
+<div style={{fontSize:11,color:MUTED}}>{v.count} venda(s)</div>
+</div>
+<Badge color={SUCCESS}>{fmt(v.total)}</Badge>
+</div>)}
+</div>}
+</>}
+</>}
 {!selectedRoute?<div style={{textAlign:'center',padding:'60px 20px',color:MUTED}}><div style={{fontSize:48,marginBottom:12}}>🗺️</div><div style={{fontWeight:700,fontSize:16,color:TEXT}}>Selecione uma rota para começar</div></div>
 :isPrivileged?<>
 {adminVendorsToday.length>0&&<div style={{background:ACCENT_LIGHT,border:`1px solid ${ACCENT}33`,borderRadius:10,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
