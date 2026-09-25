@@ -706,11 +706,12 @@ return(<div style={{minHeight:'100vh',background:SURFACE,fontFamily:"'Inter',sys
 <button onClick={()=>supabase.auth.signOut()} style={{background:'none',border:`1px solid #ffffff55`,borderRadius:8,padding:'8px 16px',fontSize:13,color:'#e2e8f0',cursor:'pointer',fontWeight:600,marginLeft:'auto'}}>Sair</button></div>
 </div>
 <div style={{position:'fixed',bottom:0,left:0,right:0,background:CARD,borderTop:`1px solid ${BORDER}`,display:'flex',justifyContent:'space-around',padding:'6px 0',zIndex:100}}>
-<Tab id="dashboard" label="Dashboard" icon="📊"/>
+{userPerfil!=='entregador'&&<Tab id="dashboard" label="Dashboard" icon="📊"/>}
 <Tab id="clientes" label="Clientes" icon="👥"/>
-<Tab id="vendas" label="Vendas" icon="💰"/>
-<Tab id="pedido" label="Pedido" icon="🛒" badge={orders.length}/>
-<Tab id="relatorio" label="Relatório" icon="📈"/>
+{userPerfil==='entregador'&&<Tab id="entregas" label="Entregas" icon="🚚"/>}
+{userPerfil!=='entregador'&&<Tab id="vendas" label="Vendas" icon="💰"/>}
+{userPerfil!=='entregador'&&<Tab id="pedido" label="Pedido" icon="🛒" badge={orders.length}/>}
+{userPerfil!=='entregador'&&<Tab id="relatorio" label="Relatório" icon="📈"/>}
 {isPrivileged&&<Tab id="config" label="Config" icon="⚙️"/>}
 </div>
 <div style={{padding:'12px 16px'}}>
