@@ -655,7 +655,7 @@ if(user?.id&&gpsStatus==='checking'){
     <div style={{color:'#fff',fontSize:14}}>⏳ Verificando localização...</div>
   </div>
 }
-if(user?.id&&!isPrivileged&&(!selectedRoute||!dailyGoal||!dtEntrega)){
+if(user?.id&&!isPrivileged&&userPerfil!=='entregador'&&(!selectedRoute||!dailyGoal||!dtEntrega)){
   return<div style={{minHeight:'100vh',background:SURFACE,display:'flex',alignItems:'center',justifyContent:'center',padding:24,fontFamily:"'Inter',system-ui,sans-serif"}}>
     <div style={{background:CARD,borderRadius:16,padding:24,maxWidth:400,width:'100%'}}>
       <div style={{textAlign:'center',marginBottom:20}}>
