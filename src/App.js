@@ -1181,11 +1181,11 @@ return<button key={dias} onClick={()=>setPedidoVencimento(dataVenc)} style={{fle
 </div>}
 {activeTab==='relatorio'&&<div>
 <div style={{display:'flex',gap:8,marginBottom:12}}>
-{isPrivileged&&<button onClick={()=>setRelatorioTipo('compras')} style={{flex:1,background:relatorioTipo==='compras'?ACCENT:SURFACE,color:relatorioTipo==='compras'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='compras'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Vendas</button>}<button onClick={()=>setRelatorioTipo('trocas')} style={{flex:1,background:relatorioTipo==='trocas'?ACCENT:SURFACE,color:relatorioTipo==='trocas'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='trocas'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Trocas</button>
+<button onClick={()=>setRelatorioTipo('compras')} style={{flex:1,background:relatorioTipo==='compras'?ACCENT:SURFACE,color:relatorioTipo==='compras'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='compras'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Vendas</button><button onClick={()=>setRelatorioTipo('trocas')} style={{flex:1,background:relatorioTipo==='trocas'?ACCENT:SURFACE,color:relatorioTipo==='trocas'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='trocas'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Trocas</button>
 <button onClick={()=>setRelatorioTipo('ticket')} style={{flex:1,background:relatorioTipo==='ticket'?ACCENT:SURFACE,color:relatorioTipo==='ticket'?'#fff':MUTED,border:`1px solid ${relatorioTipo==='ticket'?ACCENT:BORDER}`,borderRadius:8,padding:'10px 0',fontWeight:700,fontSize:12,cursor:'pointer'}}>Ticket Médio</button>
 </div>
 {(()=>{
-const view=isPrivileged?relatorioTipo:(relatorioTipo==='compras'?'trocas':relatorioTipo)
+const view=relatorioTipo
 return view==='compras'?<>
 <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'14px 16px',marginBottom:12}}>
 <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>📈 Relatório de Vendas por Rota</div>
